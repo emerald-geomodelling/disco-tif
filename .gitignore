@@ -1,0 +1,7 @@
+*.tif
+*.ipynb_checkpoints/
+*.zip
+*__pycache__/
+*.idea/
+*.tif.aux.xml
+*.html
