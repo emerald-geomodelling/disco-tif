@@ -45,7 +45,7 @@ def write_raster_dict_data_to_geotiff(single_band_tiff_path, origprofile, raster
         with rasterio.open(new_tiff_path, 'w', **newprofile) as dst:
             dst.write(arr=value, indexes=1, masked=True)
     
-        print(f"New RGBA geotiff '{new_tiff_path}' generated successfully!")
+        print(f"New single-channel geotiff generated successfully: '{new_tiff_path}'")
         
 
 def MakeHillShadePCA(hillshades, plot_figures=False, raster_data=None, cmap='terrain', n_components=3):
