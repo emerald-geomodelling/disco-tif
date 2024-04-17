@@ -1,4 +1,4 @@
-# EMerald Generated Color Map Export File for /Users/bbloss/EMeraldCodes/disco_tif/example_data/E020N40/E020N40.tif
+# EMerald Generated Color Map Export File for /Users/bbloss/EMeraldCodes/disco-tif/example_data/E020N40/E020N40.tif
 INTERPOLATION:INTERPOLATED
 -28,0,0,255,255,-28
 -18,0,91,255,255,-18
