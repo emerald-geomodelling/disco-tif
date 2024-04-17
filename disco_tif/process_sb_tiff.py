@@ -54,13 +54,14 @@ colormap_length = 256
 
 ######################################
 
-def build_EMerald_terrain_colormap(breaks_by_percentages, custom_color_hex=EMerald_custom_colors_hexcolorcodes):
+def build_custom_colormap(breaks_by_percentages, custom_color_hex, new_cmap_name="Custom_Colormap"):
     ''' Function to take a sorted array of percentage-break-points (i.e. breaks_by_percentages) and applies it to the colorlist (i.e. custom_color_hex) colormap. The length of the breaks_by_percentages array should be the same length as custom_color_hex (length=8 for EMerald_custom_colors_hexcolorcodes) and range from 0 to 1
 
 - Parameters:
-    - breaks_by_percentages: Array of breakpoints in decimal-percentages of data. ie [0, 0.2, 0.4, 0.5, 0.6, 0.7, 0.8, 1]
-    - custom_color_hex: Array of color hex codes to generate the colormap from.
-        Default: EMerald_custom_colors_hexcolorcodes
+    - breaks_by_percentages:List of breakpoints in decimal-percentages of data. i.e. [0.0, 0.3, 0.6, 0.9, 1.0]
+    - custom_color_hex: List of color hex codes to generate the colormap from. i.e. ['#000000', '#aaaaaa', '#dddddd', '#eeeeee', '#ffffff']
+    - new_cmap_name: String name to use for the generation of the new cmap.
+        defualt: "Custom_Colormap"
     '''
     custom_color_rgb=[]
     for hexcode in custom_color_hex:
@@ -76,13 +77,22 @@ def build_EMerald_terrain_colormap(breaks_by_percentages, custom_color_hex=EMera
     else:
         sn=0
         
-    EMeraldCustomColormap_cdict = {'red':   [(breaks_by_percentages[ijk],  custom_color_array[ijk,0], custom_color_array[ijk,0]) for ijk in range(sn, len(breaks_by_percentages))],
-                                   'green': [(breaks_by_percentages[ijk],  custom_color_array[ijk,1], custom_color_array[ijk,1]) for ijk in range(sn, len(breaks_by_percentages))],
-                                   'blue':  [(breaks_by_percentages[ijk],  custom_color_array[ijk,2], custom_color_array[ijk,2]) for ijk in range(sn, len(breaks_by_percentages))],
-                                  }
+    CustomColormap_cdict = {'red':   [(breaks_by_percentages[ijk],  custom_color_array[ijk,0], custom_color_array[ijk,0]) for ijk in range(sn, len(breaks_by_percentages))],
+                            'green': [(breaks_by_percentages[ijk],  custom_color_array[ijk,1], custom_color_array[ijk,1]) for ijk in range(sn, len(breaks_by_percentages))],
+                            'blue':  [(breaks_by_percentages[ijk],  custom_color_array[ijk,2], custom_color_array[ijk,2]) for ijk in range(sn, len(breaks_by_percentages))],
+                           }
+    if custom_color_hex == EMerald_custom_colors_hexcolorcodes:
+        return CustomColormap_cdict
+    else:
+        CustomColormap = LinearSegmentedColormap(new_cmap_name, CustomColormap_cdict, N=colormap_length)
+        CustomColormap    
+        return CustomColormap
+
+
+def build_EMerald_terrain_colormap(breaks_by_percentages):
+    EMeraldCustomColormap_cdict = build_custom_colormap(breaks_by_percentages, EMerald_custom_colors_hexcolorcodes)
     EMeraldCustomColormap = LinearSegmentedColormap("EMerald_Custom_Colormap", EMeraldCustomColormap_cdict, N=colormap_length)
     EMeraldCustomColormap
-    
     return EMeraldCustomColormap
 
 ######################################
