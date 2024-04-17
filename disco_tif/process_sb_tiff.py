@@ -59,7 +59,9 @@ def build_custom_colormap(breaks_by_percentages, custom_color_hex, new_cmap_name
 
 - Parameters:
     - breaks_by_percentages:List of breakpoints in decimal-percentages of data. i.e. [0.0, 0.3, 0.6, 0.9, 1.0]
+    
     - custom_color_hex: List of color hex codes to generate the colormap from. i.e. ['#000000', '#aaaaaa', '#dddddd', '#eeeeee', '#ffffff']
+    
     - new_cmap_name: String name to use for the generation of the new cmap.
         defualt: "Custom_Colormap"
     '''
@@ -98,6 +100,21 @@ def build_EMerald_terrain_colormap(breaks_by_percentages):
 ######################################
 
 def make_percentile_array(data_min_max, data, no_data_value, cmap_method='pseudo_hist_norm', plot_histograms=False):
+    '''Function to build a data driven percentile array based on the cmap method specified.
+Parameters:
+    - data_min_max: list containing the minimum and maximum values to display. values outside this range will be saturated to the end members.
+    
+    - data: 2D array of cell values of the raster.
+    
+    - no_data_value: Value that specifies the no_data_value
+    
+    - cmap_method: parameter to tell the program how to bin the data. options are 'pseudo_hist_norm', or 'pseudo_linear'
+        default: 'pseudo_hist_norm'
+    
+    - plot_histograms: boolean parameter for plotting the out percentage break points
+        default: False
+    
+    '''
     if data_min_max is not None:
         assert len(data_min_max)==2, 'len of data_min_max must be 2'
         assert data_min_max[0] < data_min_max[1], 'first value must be less than second value'
