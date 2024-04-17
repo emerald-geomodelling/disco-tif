@@ -54,24 +54,32 @@ colormap_length = 256
 
 ######################################
 
-def build_EMerald_terrain_colormap(breaks_by_percentages):
-    EMerald_custom_colors_rgb=[]
-    for hexcode in EMerald_custom_colors_hexcolorcodes:
+def build_EMerald_terrain_colormap(breaks_by_percentages, custom_color_hex=EMerald_custom_colors_hexcolorcodes):
+    ''' Function to take a sorted array of percentage-break-points (i.e. breaks_by_percentages) and applies it to the colorlist (i.e. custom_color_hex) colormap. The length of the breaks_by_percentages array should be the same length as custom_color_hex (length=8 for EMerald_custom_colors_hexcolorcodes) and range from 0 to 1
+
+- Parameters:
+    - breaks_by_percentages: Array of breakpoints in decimal-percentages of data. ie [0, 0.2, 0.4, 0.5, 0.6, 0.7, 0.8, 1]
+    - custom_color_hex: Array of color hex codes to generate the colormap from.
+        Default: EMerald_custom_colors_hexcolorcodes
+    '''
+    custom_color_rgb=[]
+    for hexcode in custom_color_hex:
         temp = hex_to_rgb(hexcode) 
-        EMerald_custom_colors_rgb.append([np.round(temp[0]/(colormap_length-1), 3), 
+        custom_color_rgb.append([np.round(temp[0]/(colormap_length-1), 3), 
                                           np.round(temp[1]/(colormap_length-1), 3), 
                                           np.round(temp[2]/(colormap_length-1), 3)])
-    colorarray = np.array(EMerald_custom_colors_rgb)
-    colorarray
+    custom_color_array = np.array(custom_color_rgb)
+    custom_color_array
 
     if breaks_by_percentages[1]==0: # if second entry is 0 we know that there are no negative numbers and we should ignore blue
         sn=1
     else:
         sn=0
-    EMeraldCustomColormap_cdict = {'red':   [(breaks_by_percentages[ijk],  colorarray[ijk,0], colorarray[ijk,0]) for ijk in range(sn, len(breaks_by_percentages))],
-                         'green': [(breaks_by_percentages[ijk],  colorarray[ijk,1], colorarray[ijk,1]) for ijk in range(sn, len(breaks_by_percentages))],
-                         'blue':  [(breaks_by_percentages[ijk],  colorarray[ijk,2], colorarray[ijk,2]) for ijk in range(sn, len(breaks_by_percentages))],
-                        }
+        
+    EMeraldCustomColormap_cdict = {'red':   [(breaks_by_percentages[ijk],  custom_color_array[ijk,0], custom_color_array[ijk,0]) for ijk in range(sn, len(breaks_by_percentages))],
+                                   'green': [(breaks_by_percentages[ijk],  custom_color_array[ijk,1], custom_color_array[ijk,1]) for ijk in range(sn, len(breaks_by_percentages))],
+                                   'blue':  [(breaks_by_percentages[ijk],  custom_color_array[ijk,2], custom_color_array[ijk,2]) for ijk in range(sn, len(breaks_by_percentages))],
+                                  }
     EMeraldCustomColormap = LinearSegmentedColormap("EMerald_Custom_Colormap", EMeraldCustomColormap_cdict, N=colormap_length)
     EMeraldCustomColormap
     
