@@ -253,6 +253,7 @@ def make_rgba_tiff_from_single_Band(single_band_tiff_path,
                                     color_palette_name=None, 
                                     cmap_method='pseudo_hist_norm',
                                     output_tif=False,
+                                    generate_lookup_tables=False,
                                     plot_rgba_raster=False,
                                    ):
     '''Function to take a single band geotiff file, apply a colormap to the data, and write a rgba geotiff to file
@@ -264,16 +265,16 @@ Input parameters:
  - data_min_max: 
      default = None
      Can take a list of lenth: 2, ex: [0, 500]
-     This function will automatically apply min/max values based on the 1 and 99 percentiles of the data values (excluding no-data values).
+     if not spcified, this function will automatically apply min/max values based on the clip_perc values
  
  - min_max_method:
-     default = 'percentile'
+     default = 'percentile'; only relevant if data_min_max==None.
      Also accepts 'data_absolute'. 
      'percentile' uses the percentiles used in clip_perc. 
      'data_absolute' uses the minimum and maximum values of the data
  
  - clip_perc
-     default = [1, 99]
+     default = [1, 99]; only relevant if data_min_max==None.
      Percentile values to clip the data values to if no data_min_max is specified.
  
  - color_palette_name
@@ -287,6 +288,18 @@ Input parameters:
      Method to determine where the color breaks should be. Also accepts 'pseudo_linear'
      'pseudo_hist_norm' will produce a linear colormap for data values below 0 and a histogram normalized colormap for the positive values
      'pseudo_linear' will produce a linear colormap for data values below 0 and a separate linear colormap for the positive values.
+
+ - output_tif:
+     default = False
+     If new geotiff are desired as outputs this must be set to True
+
+ - generate_lookup_tables:
+     defaule = False
+     If set to True look up tables will be generated and written to file. This includes a look up table that can be applied to the single-band geotiff in QGIS and maybe other GIS software.
+
+ - plot_rgba_raster
+     default=False
+     If set to True this will generate new matplotlib figures.
     '''
 
     if data_min_max is not None:
@@ -359,24 +372,25 @@ Input parameters:
                      )
         plt.tight_layout()
         plt.show()    
-    
-    outfilepaths = build_1_component_color_tables(cmap=EMerald_custom_colors_hexcolorcodes,
-                                                  data_breaks=data_breaks,
-                                                  data=data,
-                                                  no_data_value=no_data_value,
-                                                  new_multiband_lut_path=new_multiband_lut_path )
-    for fp in outfilepaths:
-        print(f"Wrote 1component LUT files to: '{fp}'")
 
-    outfilepaths = build_4_component_color_tables(single_band_tiff_path=single_band_tiff_path,
-                                                  cmap=EMeraldCustomColormap,
-                                                  data=data,
-                                                  no_data_value=no_data_value,
-                                                  percentile_breaks=percentile_breaks,
-                                                  data_breaks=data_breaks,
-                                                  outfile=new_multiband_tiff_path)
-    for fp in outfilepaths:
-        print(f"wrote 4component Lut files to: '{fp}''")
+    if generate_lookup_tables:
+        outfilepaths = build_1_component_color_tables(cmap=EMerald_custom_colors_hexcolorcodes,
+                                                      data_breaks=data_breaks,
+                                                      data=data,
+                                                      no_data_value=no_data_value,
+                                                      new_multiband_lut_path=new_multiband_lut_path )
+        for fp in outfilepaths:
+            print(f"Wrote 1component LUT files to: '{fp}'")
+    
+        outfilepaths = build_4_component_color_tables(single_band_tiff_path=single_band_tiff_path,
+                                                      cmap=EMeraldCustomColormap,
+                                                      data=data,
+                                                      no_data_value=no_data_value,
+                                                      percentile_breaks=percentile_breaks,
+                                                      data_breaks=data_breaks,
+                                                      outfile=new_multiband_tiff_path)
+        for fp in outfilepaths:
+            print(f"wrote 4component Lut files to: '{fp}''")
     
     if output_tif:
         # apply EMeraldCustomColormap to data
