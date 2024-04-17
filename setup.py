@@ -3,10 +3,6 @@
 import os,sys
 from setuptools import setup, find_packages
 
-git_token = os.environ["GITHUB_TOKEN_EMRLD"]
-if not "GITHUB_TOKEN_EMRLD" in os.environ:
-    print("Github token (GITHUB_TOKEN_EMRLD) not set!", file=sys.stderr)
-
 with open('README.md') as readme_file:
     readme = readme_file.read()
 

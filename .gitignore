@@ -1,3 +1,5 @@
+*.egg-info
+.eggs
 *.tif
 *.ipynb_checkpoints/
 *.zip
@@ -5,3 +7,4 @@
 *.idea/
 *.tif.aux.xml
 *.html
+dist/

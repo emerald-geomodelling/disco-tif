@@ -1,7 +1,0 @@
-seaborn
-rasterio
-numpy
-pandas
-matplotlib
-earthpy
-scikit-learn  
