@@ -188,7 +188,19 @@ Parameters:
 
 ######################################
 
-def calc_data_min_max(data, no_data_value, clip_perc, min_max_method='percentile'):
+def calc_data_min_max(data, no_data_value, clip_perc=None, min_max_method='data_absolute'):
+    '''Function to calculate the min max values of the data
+Parameters:
+    - data: 2D array of raster cell data
+    
+    - no_data_value: value the defines the no-data-value
+    
+    - clip_perc: list of percentile (quartile) values to clip the data to. i.e. [1, 99] for clip to the fist and 99th percentiles of the data (essentiall, exclude erroneous high or low points). this is only relevant if the min_max_method is 'data_absolute'.
+        Default: None
+        
+    - min_max_method: defines how to define the min_max method. Options are: 'data_absolute', or 'percentile'
+        default: 'data_absolute'
+    '''
     if min_max_method=='data_absolute':
         # using absolute min max from data
         if no_data_value is not None:
