@@ -3,9 +3,9 @@
 import os,sys
 from setuptools import setup, find_packages
 
-setup(name = 'disco_tif',
+setup(name = 'disco-tif',
       version = "0.0.1",
-      url = 'https://github.com/emerald-geomodelling/disco_tif',
+      url = 'https://github.com/emerald-geomodelling/disco-tif',
       author = "Benjamin Bloss",
       author_email = 'bb@emrld.no',
       description = "Geotiff processing utilities",
