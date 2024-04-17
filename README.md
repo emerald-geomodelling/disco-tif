@@ -28,6 +28,12 @@ if 'pseudo-linear' is specified, the positive region of the data range will be l
 
 Both of these colormaps are valid and the end user should evaluate which fits their needs better.
 
+The end user has the ability to write these colormaps to a look-up-table (lut) file. For maximum usability these there are several flavors of LUTs written.
+  1) one band per file - these are appended with "_r.lut", "_g.lut", "_b.lut", and "_a.lut"
+  2) all four bands in one file - There will be an "rgba" in the file name
+  3) all four bands in one file including the no-data value - There will be an "rgba" and "NAN" in the file name
+  4) a QGIS (possibly other GIS software) compatible look up table - this has the extension ".txt"
+
 In building the colormaps a user can specify data min-max values, but if no data range is specified the program will choose min-max values based on the 1st and 99th percentile (quartile) of the data values.
 
 In addition to generating new colorized geotiffs this library has the ability to generate hillshades. This is just a wrapper around earthpy. For this you can specify a sun_azimuth angle and an sun_altitude angle to generate the hill shade. You can also pass in an array of sun_azimuth angles and/or and array of sun_altitude angles. This program will generate a new hillshade for each of the combiniations of azimuths and altitudes.
