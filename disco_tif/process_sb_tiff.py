@@ -10,6 +10,7 @@ import datetime
 import numpy as np
 import pandas as pd
 import sklearn.decomposition
+import copy
 
 ######################################
 
@@ -59,13 +60,32 @@ def build_custom_colormap(breaks_by_percentages, custom_color_hex, new_cmap_name
     ''' Function to take a sorted array of percentage-break-points (i.e. breaks_by_percentages) and applies it to the colorlist (i.e. custom_color_hex) colormap. The length of the breaks_by_percentages array should be the same length as custom_color_hex (length=8 for EMerald_custom_colors_hexcolorcodes) and range from 0 to 1
 
 Input Parameters:
-    - breaks_by_percentages: List of breakpoints in decimal-percentages of data. i.e. [0.0, 0.3, 0.6, 0.9, 1.0]
+    - breaks_by_percentages: List of breakpoints in decimal-percentages of data. [0.0, 0.3, 0.6, 0.9, 1.0]
+        - note - if starting and ending points are not at 0 and 1, respectively, the program will prepend and append the list with 0 and 1.
+            The program will also copy the first and last colors in custom_color_hex to the new low and high percentages appended
     
     - custom_color_hex: List of color hex codes to generate the colormap from. i.e. ['#000000', '#aaaaaa', '#dddddd', '#eeeeee', '#ffffff']
     
     - new_cmap_name: String name to use for the generation of the new cmap.
         defualt: "Custom_Colormap"
     '''
+    breaks_by_percentages = copy.deepcopy(breaks_by_percentages)
+    custom_color_hex = copy.deepcopy(custom_color_hex)
+
+    if len(breaks_by_percentages) != len(custom_color_hex): #it's ok for these to be differnt, but only by 1. we just omit the dark blue color if using EMerald_custom_colormap
+        custom_color_hex = custom_color_hex[1:]
+    else:
+        pass
+    
+    assert len(breaks_by_percentages) == len(custom_color_hex), "The length of the breaks_by_percentages list but be the same as the length of custom_color_hex"
+
+    if breaks_by_percentages[0] != 0:
+        breaks_by_percentages.insert(0, 0)
+        custom_color_hex.insert(0, custom_color_hex[0])
+    if breaks_by_percentages[-1] != 1:
+        breaks_by_percentages.append(1)
+        custom_color_hex.append(custom_color_hex[-1])
+    
     custom_color_rgb=[]
     for hexcode in custom_color_hex:
         temp = hex_to_rgb(hexcode) 
@@ -79,28 +99,31 @@ Input Parameters:
         sn=1
     else:
         sn=0
-        
+
+    print(f"breaks_by_percentages = {breaks_by_percentages}")
     CustomColormap_cdict = {'red':   [(breaks_by_percentages[ijk],  custom_color_array[ijk,0], custom_color_array[ijk,0]) for ijk in range(sn, len(breaks_by_percentages))],
                             'green': [(breaks_by_percentages[ijk],  custom_color_array[ijk,1], custom_color_array[ijk,1]) for ijk in range(sn, len(breaks_by_percentages))],
                             'blue':  [(breaks_by_percentages[ijk],  custom_color_array[ijk,2], custom_color_array[ijk,2]) for ijk in range(sn, len(breaks_by_percentages))],
                            }
-    if custom_color_hex == EMerald_custom_colors_hexcolorcodes:
-        return CustomColormap_cdict
-    else:
-        CustomColormap = LinearSegmentedColormap(new_cmap_name, CustomColormap_cdict, N=colormap_length)
-        CustomColormap    
-        return CustomColormap
+    CustomColormap = LinearSegmentedColormap(new_cmap_name, CustomColormap_cdict, N=colormap_length)
+    CustomColormap    
+    return CustomColormap
 
 
 def build_EMerald_terrain_colormap(breaks_by_percentages):
-    EMeraldCustomColormap_cdict = build_custom_colormap(breaks_by_percentages, EMerald_custom_colors_hexcolorcodes)
-    EMeraldCustomColormap = LinearSegmentedColormap("EMerald_Custom_Colormap", EMeraldCustomColormap_cdict, N=colormap_length)
-    EMeraldCustomColormap
+    EMeraldCustomColormap = build_custom_colormap(breaks_by_percentages=breaks_by_percentages, 
+                                                  custom_color_hex=copy.deepcopy(EMerald_custom_colors_hexcolorcodes),
+                                                  new_cmap_name="EMerald_Custom_Colormap")
     return EMeraldCustomColormap
 
 ######################################
 
-def make_percentile_array(data_min_max, data, no_data_value, cmap_method='pseudo_hist_norm', plot_histograms=False):
+def make_percentile_array(data_min_max,
+                          data,
+                          no_data_value,
+                          cmap_method='pseudo_hist_norm',
+                          color_list=copy.deepcopy(EMerald_custom_colors_hexcolorcodes),
+                          plot_histograms=False):
     '''Function to build a data driven percentile array based on the cmap method specified.
 Input Parameters:
     - data_min_max: list containing the minimum and maximum values to display. values outside this range will be saturated to the end members.
@@ -113,6 +136,9 @@ Input Parameters:
     
     - cmap_method: parameter to tell the program how to bin the data. Options are 'pseudo_hist_norm', or 'pseudo_linear'
         default: 'pseudo_hist_norm'
+
+    - color_list: list of colors, global variable
+        Default: EMerald_custom_colors_hexcolorcodes
     
     - plot_histograms: boolean parameter for plotting the percentage break points on top of a histogram of the data
         default: False
@@ -122,30 +148,40 @@ Input Parameters:
         assert len(data_min_max)==2, 'len of data_min_max must be 2'
         assert data_min_max[0] < data_min_max[1], 'first value must be less than second value'
         assert data_min_max[1] > 0, 'This should really be a bigger number, but at least this will save dividing by a zero...'
-
+    
     datatype = str(data[0,0].dtype)
-    num_color = len(EMerald_custom_colors_hexcolorcodes)
-    bz_num_color = 1 #number of colors for below zero
-    az_num_color = num_color-bz_num_color-1 # number of intervals
+    
+    if data_min_max[0]<0:
+        bz_num_color = 1 #number of colors for below zero
+    else:
+        bz_num_color = 0 #number of colors for below zero
+        color_list = color_list[1:]
 
-    z_data = data.copy()
-    z_data = z_data.flatten()
-    bz_data = z_data[z_data<0]
-    az_data = z_data[z_data>=0]
-    norm_az_data = (az_data.copy() - np.min(az_data)) / (np.max(az_data) - np.min(az_data)) # shift to zero, then normalize by the range
+    num_color = len(color_list)
+    az_num_color = num_color-bz_num_color # number of intervals
+
+    clip_data = data.copy()
+    clip_data = clip_data.flatten()
+    #clip_data = clip_data.astype(float)
+    if no_data_value is not None:
+        clip_data = clip_data[clip_data!=no_data_value]
+    clip_data = np.clip(clip_data, data_min_max[0], data_min_max[1])
+    az_clip_data = clip_data.copy()
+    az_clip_data = az_clip_data[az_clip_data>=0]
+    
 
     if cmap_method=='pseudo_linear':
         az_min=np.max([0, data_min_max[0]]) # above_zero_min: if data_min_max[0]<0, then 0; if data_min_max[0]>=0, then data_min_max[0].
         #print(f"az_min = {az_min}")
-        az_data_breaks = np.round(np.linspace(az_min, data_min_max[1], az_num_color+1))
+        az_data_breaks = np.round(np.linspace(az_min, data_min_max[1], az_num_color))
         #print(f"az_data_breaks = {az_data_breaks}")
         
     elif cmap_method=='pseudo_hist_norm':
-        my_percentiles = np.linspace(0, 100, az_num_color+1)
+        my_percentiles = np.linspace(0, 100, az_num_color)
         my_percentiles = my_percentiles[1:-1]
         #print(f"my_percentiles = {my_percentiles}")
         
-        az_data_breaks = np.percentile(a=az_data, q=my_percentiles)
+        az_data_breaks = np.percentile(a=az_clip_data, q=my_percentiles)
         if data_min_max[0]<0:
             az_data_breaks = np.insert(az_data_breaks, 0, 0) #prepend with: if data_min_max[0]<0, then 0; 
         else:    
@@ -153,36 +189,51 @@ Input Parameters:
         az_data_breaks = np.append(az_data_breaks, data_min_max[1])
         #print(f"az_data_breaks = {az_data_breaks}")
     
-    data_breaks = [data_min_max[0]]
+    if data_min_max[0]<0:
+        data_breaks = [data_min_max[0]]
+    else:
+        data_breaks = []
     #print(f"data_breaks = {data_breaks}")
     data_breaks.extend(az_data_breaks)
     data_breaks = np.array(data_breaks)
     data_breaks = data_breaks.astype(datatype).tolist()
     #print(f"data_breaks = {data_breaks}")
     
-    percentile_breaks = np.round((np.array(data_breaks) - data_min_max[0]) / (data_min_max[1] - data_min_max[0]), 4)
+    no_dum_data = data.copy()
+    no_dum_data = no_dum_data.flatten()
+    no_dum_data = no_dum_data.astype(float)
+    if no_data_value is not None:
+        no_dum_data[no_dum_data==no_data_value] = np.nan
+    abs_min_max = [np.nanmin(no_dum_data), np.nanmax(no_dum_data)]
+    percentile_breaks = np.round((np.array(data_breaks) - abs_min_max[0]) / (abs_min_max[1] - abs_min_max[0]), 4) # relative to the specified min,max
     percentile_breaks = percentile_breaks.tolist()
     #print(f"percentile_breaks = {percentile_breaks}")
 
+    
     if plot_histograms:
-        no_dum_data = data.copy()
-        no_dum_data = no_dum_data.flatten()
-        no_dum_data = no_dum_data.astype(float)
-        if no_data_value is not None:
-            no_dum_data[no_dum_data==no_data_value] = np.nan
-        norm_no_dum_data = (no_dum_data.copy() - data_min_max[0]) / (data_min_max[1] - data_min_max[0]) # shift to zero, then normalize by the range
+        norm_no_dum_data = (no_dum_data.copy() - abs_min_max[0]) / (abs_min_max[1] - abs_min_max[0]) # shift to zero, then normalize by the range
         
-        fig, axs = plt.subplots(nrows=2, ncols=1, sharey=True)
+        fig, axs = plt.subplots(nrows=2, ncols=1, sharey=True, figsize=[12, 6])
         
-        axs[0].hist(no_dum_data, bins=min(data_min_max[1]-data_min_max[0], 100))
+        axs[0].hist(no_dum_data, bins=min(abs_min_max[1]-abs_min_max[0], 100))
         ylimits = axs[0].get_ylim()
-        for db in data_breaks:
-            axs[0].plot([db, db], [0, ylimits[1]])
+        axs[0].plot([abs_min_max[0], abs_min_max[0]], [0, ylimits[1]], c='k', ls=":", lw=1, label=abs_min_max[0])
+        for ii, db in enumerate(data_breaks):
+            axs[0].plot([db, db], [0, ylimits[1]], c='k', lw=2, label=None)
+            axs[0].plot([db, db], [0, ylimits[1]], c=color_list[ii], lw=1, label=db)
+        axs[0].plot([abs_min_max[1], abs_min_max[1]], [0, ylimits[1]], c='k', ls="--", lw=1, label=abs_min_max[1])
+        axs[0].set_ylim(ylimits)
+        axs[0].legend(loc='center right', bbox_to_anchor=(1.11, 0.5))
         axs[0].set_title('Breaks by data values')
     
-        axs[1].hist(norm_no_dum_data, bins=min(data_min_max[1]-data_min_max[0], 100))
-        for pb in percentile_breaks:
-            axs[1].plot([pb, pb], [0, ylimits[1]])
+        axs[1].hist(norm_no_dum_data, bins=min(abs_min_max[1]-abs_min_max[0], 100))
+        axs[1].plot([0, 0], [0, ylimits[1]], c='k', ls=":", lw=1, label='0')
+        for ii, pb in enumerate(percentile_breaks):
+            axs[1].plot([pb, pb], [0, ylimits[1]], c='k', lw=2, label=None)
+            axs[1].plot([pb, pb], [0, ylimits[1]], c=color_list[ii], lw=1, label=pb)
+        axs[1].plot([1, 1], [0, ylimits[1]], c='k', ls="--", lw=1, label='1')
+        axs[0].set_ylim(ylimits)
+        axs[1].legend(loc='center right', bbox_to_anchor=(1.11, 0.5))
         axs[1].set_title('Breaks by percentage of data')
         
         plt.tight_layout(); plt.show()
@@ -242,23 +293,23 @@ Input Parameters:
     - new_multiband_lut_path: Full path (without extionsion) to the desired files. Color component and extention will appended to the filename.
         ex: red file: new_multiband_lut_path + '_r.lut
     '''
-    EMerald_colors_rgb = pd.DataFrame()
+    colors_rgb = pd.DataFrame()
     for ii in range(0, len(cmap)):
         hexcolor = cmap[ii]
-        EMerald_colors_rgb.loc[ii, ['r']] = hex_to_rgb(hexcolor)[0]
-        EMerald_colors_rgb.loc[ii, ['g']] = hex_to_rgb(hexcolor)[1]
-        EMerald_colors_rgb.loc[ii, ['b']] = hex_to_rgb(hexcolor)[2]
+        colors_rgb.loc[ii, ['r']] = hex_to_rgb(hexcolor)[0]
+        colors_rgb.loc[ii, ['g']] = hex_to_rgb(hexcolor)[1]
+        colors_rgb.loc[ii, ['b']] = hex_to_rgb(hexcolor)[2]
     
-    if len(EMerald_colors_rgb) == len(data_breaks):
-        EMerald_colors_rgb['data_val'] = np.array(data_breaks)
+    if len(colors_rgb) == len(data_breaks):
+        colors_rgb['data_val'] = np.array(data_breaks)
     else:
-        print("there's an odd mismatch in length of 'EMerald_colors_rgb' and 'data_breaks'")
+        print("there's an odd mismatch in length of 'cmap' and 'data_breaks'")
 
     outfilepaths=[]
     for rgb in ['r', 'g', 'b']:
-        lut_str = f"{EMerald_colors_rgb.loc[0, 'data_val']}: {EMerald_colors_rgb.loc[0, rgb]}" 
-        for row in range(1, len(EMerald_colors_rgb)):
-                lut_str = f"{lut_str}, {EMerald_colors_rgb.loc[row, 'data_val']}: {int(np.round(EMerald_colors_rgb.loc[row, rgb]))}"
+        lut_str = f"{colors_rgb.loc[0, 'data_val']}: {colors_rgb.loc[0, rgb]}" 
+        for row in range(1, len(colors_rgb)):
+                lut_str = f"{lut_str}, {colors_rgb.loc[row, 'data_val']}: {int(np.round(colors_rgb.loc[row, rgb]))}"
         tname=f"{new_multiband_lut_path}_{rgb}.lut"
         outfilepaths.append(tname)
         with open(tname, 'w') as lut_file_out:
@@ -278,7 +329,7 @@ Input Parameters:
 def build_4_component_color_tables(cmap, data_breaks, percentile_breaks, dtype, no_data_value, new_multiband_lut_path, single_band_tiff_path=None):
     '''description
 Input Parameters:
-    - cmap: List of hex color codes. ex: EMerald_custom_colors_hexcolorcodes
+    - cmap: mpl colormap object
     
     - data_breaks: List of data values to map the cmap too
     
@@ -295,11 +346,24 @@ Input Parameters:
     - single_band_tiff_path: optional path of the single-band source geotiff to write into the header of the QGIS lut file 
     '''
         
-    index_breaks = np.round([id * 255 for id in percentile_breaks]).astype(int).tolist()
-    index_breaks
+    #index_breaks = np.round([id * 255 for id in percentile_breaks]).astype(int).tolist()
+    index_breaks = [id * 255 for id in percentile_breaks]
+    index_breaks[0] = np.floor(index_breaks[0])
+    index_breaks = np.round(index_breaks).astype(int).tolist()
 
+    maybe best to take the rgb channgels and convert them to hex and then match those indicies to the databreaks and then fill in the end members from there?
+    
     ph_colormap_df = pd.DataFrame((cmap._lut * 255).astype('uint8'), columns=['red', 'green', 'blue', 'alpha']).iloc[:256,:]
     ph_colormap_df.loc[index_breaks,'data_breaks'] = data_breaks
+    print(f"index_breaks = {index_breaks}")
+    print(f"data_breaks = {data_breaks}")
+    tempind = []
+    for ind in index_breaks:
+        tempind.append(ind-1)
+        tempind.append(ind)
+        tempind.append(ind+1)
+    tempind = sorted(tempind)
+    print(ph_colormap_df.loc[tempind])
     ph_colormap_df['data_breaks'] = ph_colormap_df['data_breaks'].interpolate(method='linear').astype(type(data_breaks[0]))
     
     nan_ph_colormap_df = ph_colormap_df.copy()
@@ -349,12 +413,12 @@ Input parameters:
  - data_min_max: 
      default = None
      Can take a list of lenth: 2, ex: [0, 500]
-     if not spcified, this function will automatically apply min/max values based on the clip_perc values
+     if not spcified, this function will automatically calculated min/max values based on the min_max_method.
  
  - min_max_method:
      default = 'percentile'; only relevant if data_min_max==None.
      Also accepts 'data_absolute'. 
-     'percentile' uses the percentiles used in clip_perc. 
+     'percentile' uses the percentiles supplied in clip_perc. 
      'data_absolute' uses the minimum and maximum values of the data supplied to the function
  
  - clip_perc
@@ -407,22 +471,20 @@ Input parameters:
     if data_min_max is None:
         data_min_max = calc_data_min_max(data, no_data_value, clip_perc, min_max_method=min_max_method)
 
-    # Clip data values to the specified range
-    clipped_data = np.clip(data, data_min_max[0], data_min_max[1])
-    
-    # Normalize the clipped data to the [0, 1] range
-    normalized_data = (clipped_data - data_min_max[0]) / (data_min_max[1] - data_min_max[0]) # shift to zero, divide by the range
-
-    # clip the data to the min-max values specified
-    clipped_data_with_dum = clipped_data.copy()
+    data_with_nan = data.copy().astype(float)
     if no_data_value is not None:
-        clipped_data_with_dum[data==no_data_value]=no_data_value # since int is a valid datatype we can reuse the no-data-value (iff it's outside our min-max range)
-    
+        data_with_nan[data==no_data_value]=np.nan
+
+    # Normalize the clipped data to the [0, 1] range
+    normalized_data_with_nan = (data_with_nan - np.nanmin(data_with_nan)) / (np.nanmax(data_with_nan) - np.nanmin(data_with_nan)) # shift to zero, divide by the range
+
     # make percentile ranges
-    percentile_breaks, data_breaks = make_percentile_array(data_min_max, 
-                                                           clipped_data_with_dum, 
-                                                           no_data_value,
-                                                           cmap_method=cmap_method)
+    percentile_breaks, data_breaks = make_percentile_array(data_min_max=data_min_max, 
+                                                           data=data, 
+                                                           no_data_value=no_data_value,
+                                                           color_list=EMerald_custom_colors_hexcolorcodes,
+                                                           cmap_method=cmap_method, 
+                                                           plot_histograms=True)
     #print(f"percentile_breaks = {percentile_breaks}")
     #print(f"data_breaks = {data_breaks}")
 
@@ -442,14 +504,9 @@ Input parameters:
     new_multiband_tiff_path = f"{sbpath}_rgba_{suffix}"
     
     if plot_rgba_raster:
-        # clip the data to the min-max values specified
-        clipped_data_with_nan = clipped_data.copy().astype(float)
-        if no_data_value is not None:
-            clipped_data_with_nan[data==no_data_value]=np.nan
-    
         figsize = [15, 9]
         fig,ax=plt.subplots(1,1,figsize=figsize)
-        ep.plot_bands(clipped_data_with_nan,
+        ep.plot_bands(data_with_nan,
                       cmap = EMeraldCustomColormap,
                       title=f"{sbpath.split(os.path.sep)[-1]}\n{suffix.replace('_', ' ')}",
                       ax=ax,
@@ -482,7 +539,7 @@ Input parameters:
     
     if output_tif:
         # apply EMeraldCustomColormap to data
-        rgba_data = EMeraldCustomColormap(normalized_data) * (colormap_length-1)  # Scale to 0-255 range
+        rgba_data = EMeraldCustomColormap(normalized_data_with_nan) * (colormap_length-1)  # Scale to 0-255 range
         
         # 3. Convert to RGB Channels:
         rgb_data = rgba_data[:, :, :3]  # Extract RGB channels
