@@ -13,6 +13,18 @@ import sklearn.decomposition
 
 
 def plot_singleband_raster(raster_data, cmap="terrain", title='Raster Data', ax=None, figsize = [15, 9]):
+    '''description
+Input Parameters:
+    - raster_data:
+    
+    - cmap="terrain":
+    
+    - title='Raster Data':
+    
+    - ax=None:
+    
+    - figsize = [15, 9]
+    '''
     # Plot the data
     if ax is None:
         figsize = [15, 9]
@@ -31,6 +43,16 @@ def plot_greyband_only(raster_data_dict,
                        ncols,
                        plotsize=4):
     
+    '''description
+Input Parameters:
+    - raster_data_dict:
+
+    - nrows:
+
+    - ncols:
+
+    - plotsize=4
+    '''
     fig, axs = plt.subplots(nrows=nrows, ncols=ncols, figsize=[ncols*plotsize, nrows*plotsize] )
     try:
         axs=axs.flatten()
@@ -52,6 +74,20 @@ def plot_greyband_only(raster_data_dict,
 
 
 def plot_color_raster_with_greyscale_overlay(raster_data, raster_data_dict, nrows, ncols, plotsize=4, cmap='terrain'):
+    '''description
+Input Parameters:
+    - raster_data:
+    
+    - raster_data_dict:
+    
+    - nrows:
+    
+    - ncols:
+    
+    - plotsize=4:
+    
+    - cmap='terrain'
+    '''
     fig, axs = plt.subplots(nrows=nrows, ncols=ncols, figsize=[ncols*plotsize, nrows*plotsize] )
     try:
         axs=axs.flatten()

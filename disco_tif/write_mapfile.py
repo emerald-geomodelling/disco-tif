@@ -20,6 +20,15 @@ def generate_LUT_based_mapfile(single_band_tiff_path, mapfile_path, writeLUTs=Tr
     single_band_tiff_path: path to single band geotiff
     rgba_tiff_path: path to multiband geotiff
     mapfile_path: path of output mapfile
+    - single_band_tiff_path:
+    
+    - mapfile_path:
+    
+    - writeLUTs=True:
+    
+    - writeTifs=False:
+    
+    - writeHillshades=True
     '''
 
     #print(f"single_band_tiff_path = {single_band_tiff_path}")
@@ -199,6 +208,12 @@ def generate_tiff_based_mapfile(single_band_tiff_path, rgba_tiff_path, mapfile_p
     single_band_tiff_path: path to single band geotiff
     rgba_tiff_path: path to multiband geotiff
     mapfile_path: path of output mapfile
+
+    - single_band_tiff_path:
+    
+    - rgba_tiff_path:
+    
+    - mapfile_path
     '''
     # Open the single-band GeoTIFF
     with rasterio.open(single_band_tiff_path, 'r') as src:

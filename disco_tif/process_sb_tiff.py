@@ -50,6 +50,7 @@ EMerald_custom_colors_hexcolorcodes = ['#0000ff', # Blue
                                        '#fffafc', # Near_White
                                       ]
 
+# define the number of the colors for the colormap
 colormap_length = 256
 
 ######################################
@@ -57,8 +58,8 @@ colormap_length = 256
 def build_custom_colormap(breaks_by_percentages, custom_color_hex, new_cmap_name="Custom_Colormap"):
     ''' Function to take a sorted array of percentage-break-points (i.e. breaks_by_percentages) and applies it to the colorlist (i.e. custom_color_hex) colormap. The length of the breaks_by_percentages array should be the same length as custom_color_hex (length=8 for EMerald_custom_colors_hexcolorcodes) and range from 0 to 1
 
-- Parameters:
-    - breaks_by_percentages:List of breakpoints in decimal-percentages of data. i.e. [0.0, 0.3, 0.6, 0.9, 1.0]
+Input Parameters:
+    - breaks_by_percentages: List of breakpoints in decimal-percentages of data. i.e. [0.0, 0.3, 0.6, 0.9, 1.0]
     
     - custom_color_hex: List of color hex codes to generate the colormap from. i.e. ['#000000', '#aaaaaa', '#dddddd', '#eeeeee', '#ffffff']
     
@@ -101,17 +102,19 @@ def build_EMerald_terrain_colormap(breaks_by_percentages):
 
 def make_percentile_array(data_min_max, data, no_data_value, cmap_method='pseudo_hist_norm', plot_histograms=False):
     '''Function to build a data driven percentile array based on the cmap method specified.
-Parameters:
+Input Parameters:
     - data_min_max: list containing the minimum and maximum values to display. values outside this range will be saturated to the end members.
+        ex: [min, max]
     
     - data: 2D array of cell values of the raster.
-    
+        ex: ([[x1y1, ..., xny1], [x1y2, ..., xny2], ..., [x1yn, ..., xnyn]])
+        
     - no_data_value: Value that specifies the no_data_value
     
-    - cmap_method: parameter to tell the program how to bin the data. options are 'pseudo_hist_norm', or 'pseudo_linear'
+    - cmap_method: parameter to tell the program how to bin the data. Options are 'pseudo_hist_norm', or 'pseudo_linear'
         default: 'pseudo_hist_norm'
     
-    - plot_histograms: boolean parameter for plotting the out percentage break points
+    - plot_histograms: boolean parameter for plotting the percentage break points on top of a histogram of the data
         default: False
     
     '''
@@ -190,12 +193,13 @@ Parameters:
 
 def calc_data_min_max(data, no_data_value, clip_perc=None, min_max_method='data_absolute'):
     '''Function to calculate the min max values of the data
-Parameters:
-    - data: 2D array of raster cell data
-    
+Input Parameters:
+    - data: 2D array of cell values of the raster.
+        ex: ([[x1y1, ..., xny1], [x1y2, ..., xny2], ..., [x1yn, ..., xnyn]])
+        
     - no_data_value: value the defines the no-data-value
     
-    - clip_perc: list of percentile (quartile) values to clip the data to. i.e. [1, 99] for clip to the fist and 99th percentiles of the data (essentiall, exclude erroneous high or low points). this is only relevant if the min_max_method is 'data_absolute'.
+    - clip_perc: list of percentile (quartile) values to clip the data to. i.e. [1, 99] for clip to the fist and 99th percentiles of the data (essentialy, exclude erroneous high or low points). This is only relevant if the min_max_method is 'percentile'.
         Default: None
         
     - min_max_method: defines how to define the min_max method. Options are: 'data_absolute', or 'percentile'
@@ -221,7 +225,23 @@ Parameters:
 
 ######################################
 
-def build_1_component_color_tables(cmap, data_breaks, data, no_data_value, new_multiband_lut_path):
+#def build_1_component_color_tables(cmap, data_breaks, data, no_data_value, new_multiband_lut_path):
+def build_1_component_color_tables(cmap, data_breaks, dtype, no_data_value, new_multiband_lut_path):
+    '''description
+Input Parameters:
+    - cmap: List of hex color codes. ex: EMerald_custom_colors_hexcolorcodes
+    
+    - data_breaks: List of data values to map the cmap too
+    
+    #- data: 2D array of cell values of the raster.
+    #    ex: ([[x1y1, ..., xny1], [x1y2, ..., xny2], ..., [x1yn, ..., xnyn]])
+    - dtype: data_type of raster data - probably 'int', or 'float'
+    
+    - no_data_value: Value that specifies the no_data_value
+    
+    - new_multiband_lut_path: Full path (without extionsion) to the desired files. Color component and extention will appended to the filename.
+        ex: red file: new_multiband_lut_path + '_r.lut
+    '''
     EMerald_colors_rgb = pd.DataFrame()
     for ii in range(0, len(cmap)):
         hexcolor = cmap[ii]
@@ -244,7 +264,8 @@ def build_1_component_color_tables(cmap, data_breaks, data, no_data_value, new_m
         with open(tname, 'w') as lut_file_out:
             lut_file_out.write(lut_str)
     
-    lut_str = f"{np.array(no_data_value, dtype=data[0,0].dtype).tolist()}: 0, {data_breaks[0]}: 255, {data_breaks[-1]}:255"
+    #lut_str = f"{np.array(no_data_value, dtype=data[0,0].dtype).tolist()}: 0, {data_breaks[0]}: 255, {data_breaks[-1]}:255"
+    lut_str = f"{np.array(no_data_value, dtype=dtype).tolist()}: 0, {data_breaks[0]}: 255, {data_breaks[-1]}:255"
     tname=f"{new_multiband_lut_path}_a.lut"
     outfilepaths.append(tname)    
     with open(tname, 'w') as lut_file_out:
@@ -252,14 +273,28 @@ def build_1_component_color_tables(cmap, data_breaks, data, no_data_value, new_m
 
     return outfilepaths
     
-######################################
 
-def build_4_component_color_tables(single_band_tiff_path, cmap, data, no_data_value, percentile_breaks, data_breaks, outfile):
-    pathparts = single_band_tiff_path.split(os.path.sep)
-    destfolder = ''
-    for part in pathparts[:-1]:
-        destfolder=f"{destfolder}{part}{os.path.sep}"
+#def build_4_component_color_tables(cmap, data_breaks, percentile_breaks, data, no_data_value, new_multiband_lut_path, single_band_tiff_path=None):
+def build_4_component_color_tables(cmap, data_breaks, percentile_breaks, dtype, no_data_value, new_multiband_lut_path, single_band_tiff_path=None):
+    '''description
+Input Parameters:
+    - cmap: List of hex color codes. ex: EMerald_custom_colors_hexcolorcodes
     
+    - data_breaks: List of data values to map the cmap too
+    
+    - percentile_breaks: List of percentile values to map the cmap too
+    
+    #- data: 2D array of cell values of the raster.
+    #    ex: ([[x1y1, ..., xny1], [x1y2, ..., xny2], ..., [x1yn, ..., xnyn]])
+    - dtype: data_type of raster data - probably 'int', or 'float'
+    
+    - no_data_value: Value that specifies the no_data_value
+    
+    - new_multiband_lut_path: Full path (without extionsion) to the desired files. Extension and what the file is for will be appended to this name
+
+    - single_band_tiff_path: optional path of the single-band source geotiff to write into the header of the QGIS lut file 
+    '''
+        
     index_breaks = np.round([id * 255 for id in percentile_breaks]).astype(int).tolist()
     index_breaks
 
@@ -268,25 +303,27 @@ def build_4_component_color_tables(single_band_tiff_path, cmap, data, no_data_va
     ph_colormap_df['data_breaks'] = ph_colormap_df['data_breaks'].interpolate(method='linear').astype(type(data_breaks[0]))
     
     nan_ph_colormap_df = ph_colormap_df.copy()
-    nan_ph_colormap_df.loc[-1] = [0, 0, 0, 0, np.array(no_data_value, dtype=data[0,0].dtype).tolist()]
+    #nan_ph_colormap_df.loc[-1] = [0, 0, 0, 0, np.array(no_data_value, dtype=data[0,0].dtype).tolist()]
+    nan_ph_colormap_df.loc[-1] = [0, 0, 0, 0, np.array(no_data_value, dtype=dtype).tolist()]
     nan_ph_colormap_df.index = nan_ph_colormap_df.index + 1  # shifting index
     nan_ph_colormap_df = nan_ph_colormap_df.sort_index()  # sorting by index
     
-    #outfile = os.path.join(destfolder, outfile)
-    
-    qgisfile = f"{outfile}_qgis_color_table.txt"
+    qgisfile = f"{new_multiband_lut_path}_qgis_color_table.txt"
     ph_colormap_df.to_csv(qgisfile, index=False, header=False, columns=['data_breaks', 'red', 'green', 'blue', 'alpha', 'data_breaks'])
     with open(qgisfile, 'r') as inlut:
         origstuff=inlut.read()
     with open(qgisfile, 'w') as outlut:
         outlut.seek(0)
-        outlut.write(f"# EMerald Generated Color Map Export File for {single_band_tiff_path}\n")
+        if single_band_tiff_path is not None:
+            outlut.write(f"# EMerald Generated Color Map Export File for {single_band_tiff_path}\n")
+        else:            
+            outlut.write(f"# EMerald Generated Color Map Export File for {new_multiband_lut_path}\n")
         outlut.write("INTERPOLATION:INTERPOLATED\n")
         outlut.write(origstuff)
 
-    rgba_lut_file = f"{outfile}_lut.lut"
+    rgba_lut_file = f"{new_multiband_lut_path}_lut.lut"
     ph_colormap_df.to_csv(rgba_lut_file, index=False, header=False, columns=['data_breaks', 'red', 'green', 'blue', 'alpha'])
-    nan_rgba_lut_file = f"{outfile}_NaN_lut.lut"
+    nan_rgba_lut_file = f"{new_multiband_lut_path}_NaN_lut.lut"
     nan_ph_colormap_df.to_csv(nan_rgba_lut_file, index=False, header=False, columns=['data_breaks', 'red', 'green', 'blue', 'alpha'])
     
     return [qgisfile, rgba_lut_file]
@@ -318,7 +355,7 @@ Input parameters:
      default = 'percentile'; only relevant if data_min_max==None.
      Also accepts 'data_absolute'. 
      'percentile' uses the percentiles used in clip_perc. 
-     'data_absolute' uses the minimum and maximum values of the data
+     'data_absolute' uses the minimum and maximum values of the data supplied to the function
  
  - clip_perc
      default = [1, 99]; only relevant if data_min_max==None.
@@ -423,19 +460,23 @@ Input parameters:
     if generate_lookup_tables:
         outfilepaths = build_1_component_color_tables(cmap=EMerald_custom_colors_hexcolorcodes,
                                                       data_breaks=data_breaks,
-                                                      data=data,
+                                                      #data=data,
+                                                      dtype=data[0,0].dtype,
                                                       no_data_value=no_data_value,
-                                                      new_multiband_lut_path=new_multiband_lut_path )
+                                                      new_multiband_lut_path=new_multiband_lut_path,
+                                                     )
         for fp in outfilepaths:
             print(f"Wrote 1component LUT files to: '{fp}'")
-    
-        outfilepaths = build_4_component_color_tables(single_band_tiff_path=single_band_tiff_path,
-                                                      cmap=EMeraldCustomColormap,
-                                                      data=data,
-                                                      no_data_value=no_data_value,
-                                                      percentile_breaks=percentile_breaks,
+
+        outfilepaths = build_4_component_color_tables(cmap=EMeraldCustomColormap,
                                                       data_breaks=data_breaks,
-                                                      outfile=new_multiband_tiff_path)
+                                                      percentile_breaks=percentile_breaks,
+                                                      #data=data,
+                                                      dtype=data[0,0].dtype,
+                                                      no_data_value=no_data_value,
+                                                      new_multiband_lut_path=new_multiband_tiff_path,
+                                                      single_band_tiff_path=single_band_tiff_path,
+                                                     )
         for fp in outfilepaths:
             print(f"wrote 4component Lut files to: '{fp}''")
     

@@ -17,6 +17,18 @@ import disco_tif.geotiff_plotting
 #################################################
 
 def build_hs_az_al(start_al, al_inc, num_al_angles, start_az, num_az_angles):
+    '''description
+Input Parameters:
+    - start_al:
+    
+    - al_inc:
+    
+    - num_al_angles:
+    
+    - start_az:
+    
+    - num_az_angles
+    '''
     azimuths = np.linspace(start_az, start_az+360, num_az_angles+1) # degrees 0=360, number of divisions + 1 because start=end
     filt = azimuths>=360
     while filt.sum()>0:
@@ -32,6 +44,16 @@ def build_hs_az_al(start_al, al_inc, num_al_angles, start_az, num_az_angles):
     return azimuths, altitudes
 
 def write_raster_dict_data_to_geotiff(single_band_tiff_path, origprofile, raster_data_dict, len_hs=None):
+    '''description
+Input Parameters:
+    - single_band_tiff_path:
+    
+    - origprofile:
+    
+    - raster_data_dict:
+    
+    - len_hs=None
+    '''
     for key, value in raster_data_dict.items():
         if 'component' in key:
             assert len_hs is not None, "'len_hs' cannot be none if passing in a pca_dictionary_object"
@@ -49,6 +71,18 @@ def write_raster_dict_data_to_geotiff(single_band_tiff_path, origprofile, raster
         
 
 def MakeHillShadePCA(hillshades, plot_figures=False, raster_data=None, cmap='terrain', n_components=3):
+    '''description
+Input Parameters:
+    - hillshades:
+    
+    - plot_figures=False:
+    
+    - raster_data=None:
+    
+    - cmap='terrain':
+    
+    - n_components=3
+    '''
     if plot_figures:
         assert raster_data is not None, "raster data must be supplied if plot_figures is true"
         
@@ -115,6 +149,22 @@ def MakeHillShadePCA(hillshades, plot_figures=False, raster_data=None, cmap='ter
     
 
 def build_hillshade(single_band_tiff_path, data_min_max,  hs_azimuths, hs_altitudes, cmap='terrain', process_pca=False, plot_figures=False):
+    '''description
+Input Parameters:
+    - single_band_tiff_path:
+    
+    - data_min_max:
+    
+    - hs_azimuths:
+    
+    - hs_altitudes:
+    
+    - cmap='terrain':
+    
+    - process_pca=False:
+    
+    - plot_figures=False
+    '''
     # read geotiff and minimally process for the colormap function
     with rasterio.open(single_band_tiff_path, 'r') as src:
         data = src.read(1)  # Read the first band
