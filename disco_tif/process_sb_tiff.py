@@ -72,7 +72,6 @@ def build_custom_colormap(breaks_by_percentages, custom_color_hex, new_cmap_name
                                           np.round(temp[1]/(colormap_length-1), 3), 
                                           np.round(temp[2]/(colormap_length-1), 3)])
     custom_color_array = np.array(custom_color_rgb)
-    custom_color_array
 
     if breaks_by_percentages[1]==0: # if second entry is 0 we know that there are no negative numbers and we should ignore blue
         sn=1
@@ -87,14 +86,12 @@ def build_custom_colormap(breaks_by_percentages, custom_color_hex, new_cmap_name
         return CustomColormap_cdict
     else:
         CustomColormap = LinearSegmentedColormap(new_cmap_name, CustomColormap_cdict, N=colormap_length)
-        CustomColormap    
         return CustomColormap
 
 
 def build_EMerald_terrain_colormap(breaks_by_percentages):
     EMeraldCustomColormap_cdict = build_custom_colormap(breaks_by_percentages, EMerald_custom_colors_hexcolorcodes)
     EMeraldCustomColormap = LinearSegmentedColormap("EMerald_Custom_Colormap", EMeraldCustomColormap_cdict, N=colormap_length)
-    EMeraldCustomColormap
     return EMeraldCustomColormap
 
 ######################################
@@ -461,6 +458,6 @@ Input parameters:
             dst.write(rgba_data[:, :, 3].astype('uint8'), 4) #alpha
     
         print(f"New RGBA geotiff '{new_multiband_tiff_path}' generated successfully!")
-    return EMeraldCustomColormap, data_breaks, percentile_breaks
+    return EMeraldCustomColormap, data_breaks, percentile_breaks,  new_multiband_tiff_path
 
 ######################################
