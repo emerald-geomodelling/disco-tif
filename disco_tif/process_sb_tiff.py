@@ -100,7 +100,7 @@ Input Parameters:
     else:
         sn=0
 
-    print(f"breaks_by_percentages = {breaks_by_percentages}")
+    #print(f"breaks_by_percentages = {breaks_by_percentages}")
     CustomColormap_cdict = {'red':   [(breaks_by_percentages[ijk],  custom_color_array[ijk,0], custom_color_array[ijk,0]) for ijk in range(sn, len(breaks_by_percentages))],
                             'green': [(breaks_by_percentages[ijk],  custom_color_array[ijk,1], custom_color_array[ijk,1]) for ijk in range(sn, len(breaks_by_percentages))],
                             'blue':  [(breaks_by_percentages[ijk],  custom_color_array[ijk,2], custom_color_array[ijk,2]) for ijk in range(sn, len(breaks_by_percentages))],
@@ -205,7 +205,8 @@ Input Parameters:
     if no_data_value is not None:
         no_dum_data[no_dum_data==no_data_value] = np.nan
     abs_min_max = [np.nanmin(no_dum_data), np.nanmax(no_dum_data)]
-    percentile_breaks = np.round((np.array(data_breaks) - abs_min_max[0]) / (abs_min_max[1] - abs_min_max[0]), 4) # relative to the specified min,max
+    #percentile_breaks = np.round((np.array(data_breaks) - abs_min_max[0]) / (abs_min_max[1] - abs_min_max[0]), 4) # relative to the specified min,max
+    percentile_breaks = np.round((np.array(data_breaks) - data_min_max[0]) / (data_min_max[1] - data_min_max[0]), 4) # relative to the specified min,max
     percentile_breaks = percentile_breaks.tolist()
     #print(f"percentile_breaks = {percentile_breaks}")
 
@@ -213,32 +214,22 @@ Input Parameters:
     if plot_histograms:
         norm_no_dum_data = (no_dum_data.copy() - abs_min_max[0]) / (abs_min_max[1] - abs_min_max[0]) # shift to zero, then normalize by the range
         
-        fig, axs = plt.subplots(nrows=2, ncols=1, sharey=True, figsize=[12, 6])
-        
-        axs[0].hist(no_dum_data, bins=min(abs_min_max[1]-abs_min_max[0], 100))
-        ylimits = axs[0].get_ylim()
-        axs[0].plot([abs_min_max[0], abs_min_max[0]], [0, ylimits[1]], c='k', ls=":", lw=1, label=abs_min_max[0])
+        fig, ax = plt.subplots(nrows=1, ncols=1, sharey=True, figsize=[12, 3])
+
+        ax.hist(no_dum_data, bins=min(abs_min_max[1]-abs_min_max[0], 100))
+        ylimits = ax.get_ylim()
+        ax.plot([abs_min_max[0], abs_min_max[0]], [0, ylimits[1]], c='k', ls=":", lw=1, label=abs_min_max[0])
         for ii, db in enumerate(data_breaks):
-            axs[0].plot([db, db], [0, ylimits[1]], c='k', lw=2, label=None)
-            axs[0].plot([db, db], [0, ylimits[1]], c=color_list[ii], lw=1, label=db)
-        axs[0].plot([abs_min_max[1], abs_min_max[1]], [0, ylimits[1]], c='k', ls="--", lw=1, label=abs_min_max[1])
-        axs[0].set_ylim(ylimits)
-        axs[0].legend(loc='center right', bbox_to_anchor=(1.11, 0.5))
-        axs[0].set_title('Breaks by data values')
-    
-        axs[1].hist(norm_no_dum_data, bins=min(abs_min_max[1]-abs_min_max[0], 100))
-        axs[1].plot([0, 0], [0, ylimits[1]], c='k', ls=":", lw=1, label='0')
-        for ii, pb in enumerate(percentile_breaks):
-            axs[1].plot([pb, pb], [0, ylimits[1]], c='k', lw=2, label=None)
-            axs[1].plot([pb, pb], [0, ylimits[1]], c=color_list[ii], lw=1, label=pb)
-        axs[1].plot([1, 1], [0, ylimits[1]], c='k', ls="--", lw=1, label='1')
-        axs[0].set_ylim(ylimits)
-        axs[1].legend(loc='center right', bbox_to_anchor=(1.11, 0.5))
-        axs[1].set_title('Breaks by percentage of data')
+            ax.plot([db, db], [0, ylimits[1]], c='k', lw=2, label=None)
+            ax.plot([db, db], [0, ylimits[1]], c=color_list[ii], lw=1, label=db)
+        ax.plot([abs_min_max[1], abs_min_max[1]], [0, ylimits[1]], c='k', ls="--", lw=1, label=abs_min_max[1])
+        ax.set_ylim(ylimits)
+        ax.legend(loc='center right', bbox_to_anchor=(1.11, 0.5))
+        ax.set_title('Breaks by data values')
         
         plt.tight_layout(); plt.show()
 
-    return percentile_breaks, data_breaks
+    return data_breaks
 
 ######################################
 
@@ -275,9 +266,14 @@ Input Parameters:
     return data_min_max
 
 ######################################
+Luts to build and write: 
+    1) map the data to to rgba, 
+    2) map data to uint8, 
+    3) map uint8 data to r, g, b, a files, and 
+    4) map uint8 data to a rgba file
+    5) QGIS file
 
-#def build_1_component_color_tables(cmap, data_breaks, data, no_data_value, new_multiband_lut_path):
-def build_1_component_color_tables(cmap, data_breaks, dtype, no_data_value, new_multiband_lut_path):
+def build_color_lookup_tables(cmap, data_breaks, dtype, no_data_value, new_multiband_lut_path, single_band_tiff_path=None, write_lut_files=False):
     '''description
 Input Parameters:
     - cmap: List of hex color codes. ex: EMerald_custom_colors_hexcolorcodes
@@ -292,6 +288,8 @@ Input Parameters:
     
     - new_multiband_lut_path: Full path (without extionsion) to the desired files. Color component and extention will appended to the filename.
         ex: red file: new_multiband_lut_path + '_r.lut
+    
+    See this discussion on how to effectively use LUTs in a mapserver mapfile: https://github.com/emerald-geomodelling/disco-tif/issues/4#issuecomment-2084928873
     '''
     colors_rgb = pd.DataFrame()
     for ii in range(0, len(cmap)):
@@ -299,98 +297,99 @@ Input Parameters:
         colors_rgb.loc[ii, ['r']] = hex_to_rgb(hexcolor)[0]
         colors_rgb.loc[ii, ['g']] = hex_to_rgb(hexcolor)[1]
         colors_rgb.loc[ii, ['b']] = hex_to_rgb(hexcolor)[2]
-    
+    colors_rgb.loc[:,'a'] = 255
     if len(colors_rgb) == len(data_breaks):
         colors_rgb['data_val'] = np.array(data_breaks)
     else:
         print("there's an odd mismatch in length of 'cmap' and 'data_breaks'")
 
-    outfilepaths=[]
-    for rgb in ['r', 'g', 'b']:
-        lut_str = f"{colors_rgb.loc[0, 'data_val']}: {colors_rgb.loc[0, rgb]}" 
-        for row in range(1, len(colors_rgb)):
-                lut_str = f"{lut_str}, {colors_rgb.loc[row, 'data_val']}: {int(np.round(colors_rgb.loc[row, rgb]))}"
-        tname=f"{new_multiband_lut_path}_{rgb}.lut"
-        outfilepaths.append(tname)
-        with open(tname, 'w') as lut_file_out:
-            lut_file_out.write(lut_str)
+    rgba_lut_dict = {}
+    for ii in range(0, len(colors_rgb)):
+        rgba_lut_dict[colors_rgb.loc[ii,'data_val'].astype(dtype)] = (np.round(colors_rgb.loc[ii,'r']).astype(int), np.round(colors_rgb.loc[ii,'g']).astype(int), np.round(colors_rgb.loc[ii,'b']).astype(int), np.round(colors_rgb.loc[ii,'a']).astype(int))
+    #print(f"rgba_lut_dict = \n{rgba_lut_dict}")
     
-    #lut_str = f"{np.array(no_data_value, dtype=data[0,0].dtype).tolist()}: 0, {data_breaks[0]}: 255, {data_breaks[-1]}:255"
-    lut_str = f"{np.array(no_data_value, dtype=dtype).tolist()}: 0, {data_breaks[0]}: 255, {data_breaks[-1]}:255"
-    tname=f"{new_multiband_lut_path}_a.lut"
-    outfilepaths.append(tname)    
-    with open(tname, 'w') as lut_file_out:
-        lut_file_out.write(lut_str)
-
-    return outfilepaths
-    
-
-#def build_4_component_color_tables(cmap, data_breaks, percentile_breaks, data, no_data_value, new_multiband_lut_path, single_band_tiff_path=None):
-def build_4_component_color_tables(cmap, data_breaks, percentile_breaks, dtype, no_data_value, new_multiband_lut_path, single_band_tiff_path=None):
-    '''description
-Input Parameters:
-    - cmap: mpl colormap object
-    
-    - data_breaks: List of data values to map the cmap too
-    
-    - percentile_breaks: List of percentile values to map the cmap too
-    
-    #- data: 2D array of cell values of the raster.
-    #    ex: ([[x1y1, ..., xny1], [x1y2, ..., xny2], ..., [x1yn, ..., xnyn]])
-    - dtype: data_type of raster data - probably 'int', or 'float'
-    
-    - no_data_value: Value that specifies the no_data_value
-    
-    - new_multiband_lut_path: Full path (without extionsion) to the desired files. Extension and what the file is for will be appended to this name
-
-    - single_band_tiff_path: optional path of the single-band source geotiff to write into the header of the QGIS lut file 
-    '''
+    if not write_lut_files:
+        return rgba_lut_dict 
+    else:
+        outfilepaths=[]
         
-    #index_breaks = np.round([id * 255 for id in percentile_breaks]).astype(int).tolist()
-    index_breaks = [id * 255 for id in percentile_breaks]
-    index_breaks[0] = np.floor(index_breaks[0])
-    index_breaks = np.round(index_breaks).astype(int).tolist()
+        #############################################
+        # write RBGA single band files - do we want the no-data value in the color lut files too?
+        for rgb in ['r', 'g', 'b']:
+            lut_str_data = f"{colors_rgb.loc[0, 'data_val']}:{int(np.round(colors_rgb.loc[0, rgb]))}"
+            for row in range(1, len(colors_rgb)):
+                    lut_str_data = f"{lut_str_data},{colors_rgb.loc[row, 'data_val']}:{int(np.round(colors_rgb.loc[row, rgb]))}"
+            tname_data = f"{new_multiband_lut_path}_data_{rgb}.lut"
+            outfilepaths.append(tname_data)
+            with open(tname_data, 'w') as lut_file_out:
+                lut_file_out.write(lut_str_data)
+        lut_str_data = f"{np.array(no_data_value, dtype=dtype).tolist()}:0,{data_breaks[0]}:255,{data_breaks[-1]}:255"
+        tname_data=f"{new_multiband_lut_path}_data_a.lut"
+        outfilepaths.append(tname_data)    
+        with open(tname_data, 'w') as lut_file_out:
+            lut_file_out.write(lut_str_data)
+        
+        #############################################
+        # # write RBGA single band files - Normalized by data range
+        # for rgb in ['r', 'g', 'b']:
+        #     lut_str_norm = f"{int(np.round(((colors_rgb.loc[0, 'data_val'] - data_breaks[0])/(data_breaks[-1] - data_breaks[0]))*255))}:{int(np.round(colors_rgb.loc[0, rgb]))}"
+        #     for row in range(1, len(colors_rgb)):
+        #             lut_str_norm = f"{lut_str_norm},{int(np.round(((colors_rgb.loc[row, 'data_val'] - data_breaks[0])/(data_breaks[-1] - data_breaks[0]))*255))}:{int(np.round(colors_rgb.loc[row, rgb]))}"
+        #     tname_norm = f"{new_multiband_lut_path}_norm_{rgb}.lut"
+        #     outfilepaths.append(tname_norm)
+        #     with open(tname_norm, 'w') as lut_file_out:
+        #         lut_file_out.write(lut_str_norm)
+        # lut_str_norm = f"{np.array(no_data_value, dtype=dtype).tolist()}:0,0:255,1:255"
+        # tname_norm=f"{new_multiband_lut_path}_norm_a.lut"
+        # outfilepaths.append(tname_norm)    
+        # with open(tname_norm, 'w') as lut_file_out:
+        #     lut_file_out.write(lut_str_norm)
+    
+        #############################################
+        # Write 4channgel lutfile Short- meaning only primary breaks
+        colors_rgb['a']=255
+    
+        tname=f"{new_multiband_lut_path}_short_rgba.lut"
+        outfilepaths.append(tname)    
+        with open(tname, 'w') as outlut:
+            for ii in range(0, len(colors_rgb)):
+                outlut.write(f"{colors_rgb.loc[ii,'data_val'].astype(dtype)},{np.round(colors_rgb.loc[ii,'r']).astype(int)},{np.round(colors_rgb.loc[ii,'g']).astype(int)},{np.round(colors_rgb.loc[ii,'b']).astype(int)},{np.round(colors_rgb.loc[ii,'a']).astype(int)}\n")
+        
+        #############################################
+        # write 4 channel lookup table that is compatible with QGIS
+        qgisfile = f"{new_multiband_lut_path}_qgis_color_table_{stoday()}.txt"
+        with open(qgisfile, 'w') as outlut:
+            if single_band_tiff_path is not None:
+                outlut.write(f"# EMerald Generated Color Map Export File for {single_band_tiff_path}\n")
+            else:            
+                outlut.write(f"# EMerald Generated Color Map Export File for {new_multiband_lut_path}\n")
+            outlut.write("INTERPOLATION:INTERPOLATED\n")
+            for ii in range(0, len(colors_rgb)):
+                outlut.write(f"{colors_rgb.loc[ii,'data_val'].astype(dtype)},{np.round(colors_rgb.loc[ii,'r']).astype(int)},{np.round(colors_rgb.loc[ii,'g']).astype(int)},{np.round(colors_rgb.loc[ii,'b']).astype(int)},{np.round(colors_rgb.loc[ii,'a']).astype(int)},{colors_rgb.loc[ii,'data_val'].astype(dtype)}\n")
+        
+        #############################################
+        # write a 4 channel Lut file that also has nodata values
+        colors_rgb.loc[len(colors_rgb),['data_val','r','g','b','a']] = [np.array(no_data_value, dtype=dtype), 128, 128, 128, 0 ]
+        colors_rgb.sort_values(by=['data_val'], inplace=True, ignore_index=True)
+        tname=f"{new_multiband_lut_path}_NaN_short_rgba.lut"
+        outfilepaths.append(tname)    
+        with open(tname, 'w') as outlut:
+            for ii in range(0, len(colors_rgb)):
+                outlut.write(f"{colors_rgb.loc[ii,'data_val'].astype(dtype)},{np.round(colors_rgb.loc[ii,'r']).astype(int)},{np.round(colors_rgb.loc[ii,'g']).astype(int)},{np.round(colors_rgb.loc[ii,'b']).astype(int)},{np.round(colors_rgb.loc[ii,'a']).astype(int)}\n")
 
-    maybe best to take the rgb channgels and convert them to hex and then match those indicies to the databreaks and then fill in the end members from there?
-    
-    ph_colormap_df = pd.DataFrame((cmap._lut * 255).astype('uint8'), columns=['red', 'green', 'blue', 'alpha']).iloc[:256,:]
-    ph_colormap_df.loc[index_breaks,'data_breaks'] = data_breaks
-    print(f"index_breaks = {index_breaks}")
-    print(f"data_breaks = {data_breaks}")
-    tempind = []
-    for ind in index_breaks:
-        tempind.append(ind-1)
-        tempind.append(ind)
-        tempind.append(ind+1)
-    tempind = sorted(tempind)
-    print(ph_colormap_df.loc[tempind])
-    ph_colormap_df['data_breaks'] = ph_colormap_df['data_breaks'].interpolate(method='linear').astype(type(data_breaks[0]))
-    
-    nan_ph_colormap_df = ph_colormap_df.copy()
-    #nan_ph_colormap_df.loc[-1] = [0, 0, 0, 0, np.array(no_data_value, dtype=data[0,0].dtype).tolist()]
-    nan_ph_colormap_df.loc[-1] = [0, 0, 0, 0, np.array(no_data_value, dtype=dtype).tolist()]
-    nan_ph_colormap_df.index = nan_ph_colormap_df.index + 1  # shifting index
-    nan_ph_colormap_df = nan_ph_colormap_df.sort_index()  # sorting by index
-    
-    qgisfile = f"{new_multiband_lut_path}_qgis_color_table.txt"
-    ph_colormap_df.to_csv(qgisfile, index=False, header=False, columns=['data_breaks', 'red', 'green', 'blue', 'alpha', 'data_breaks'])
-    with open(qgisfile, 'r') as inlut:
-        origstuff=inlut.read()
-    with open(qgisfile, 'w') as outlut:
-        outlut.seek(0)
-        if single_band_tiff_path is not None:
-            outlut.write(f"# EMerald Generated Color Map Export File for {single_band_tiff_path}\n")
-        else:            
-            outlut.write(f"# EMerald Generated Color Map Export File for {new_multiband_lut_path}\n")
-        outlut.write("INTERPOLATION:INTERPOLATED\n")
-        outlut.write(origstuff)
-
-    rgba_lut_file = f"{new_multiband_lut_path}_lut.lut"
-    ph_colormap_df.to_csv(rgba_lut_file, index=False, header=False, columns=['data_breaks', 'red', 'green', 'blue', 'alpha'])
-    nan_rgba_lut_file = f"{new_multiband_lut_path}_NaN_lut.lut"
-    nan_ph_colormap_df.to_csv(nan_rgba_lut_file, index=False, header=False, columns=['data_breaks', 'red', 'green', 'blue', 'alpha'])
-    
-    return [qgisfile, rgba_lut_file]
+        #############################################
+        # write a 4 channel Lut file that also has nodata values - Norm by data range
+        #colors_rgb["norm_data_val"] = (np.round(((colors_rgb.data_val- data_breaks[0])/(data_breaks[-1] - data_breaks[0]))*254+1)).astype(int)
+        #print(f"colors_rgb = {colors_rgb}")
+        #colors_rgb.loc[colors_rgb.norm_data_val<1, 'norm_data_val'] = 0
+        #print(f"colors_rgb = {colors_rgb}")
+        #tname=f"{new_multiband_lut_path}_Norm_NaN_short_rgba.lut"
+        #outfilepaths.append(tname)    
+        #with open(tname, 'w') as outlut:
+        #    for ii in range(0, len(colors_rgb)):
+        #        outlut.write(f"{colors_rgb.loc[ii,'norm_data_val'].astype(int)},{np.round(colors_rgb.loc[ii,'r']).astype(int)},{np.round(colors_rgb.loc[ii,'g']).astype(int)},{np.round(colors_rgb.loc[ii,'b']).astype(int)},{np.round(colors_rgb.loc[ii,'a']).astype(int)}\n")
+                
+        return rgba_lut_dict, outfilepaths
     
 ######################################
 
@@ -471,27 +470,20 @@ Input parameters:
     if data_min_max is None:
         data_min_max = calc_data_min_max(data, no_data_value, clip_perc, min_max_method=min_max_method)
 
-    data_with_nan = data.copy().astype(float)
-    if no_data_value is not None:
-        data_with_nan[data==no_data_value]=np.nan
-
-    # Normalize the clipped data to the [0, 1] range
-    normalized_data_with_nan = (data_with_nan - np.nanmin(data_with_nan)) / (np.nanmax(data_with_nan) - np.nanmin(data_with_nan)) # shift to zero, divide by the range
-
     # make percentile ranges
-    percentile_breaks, data_breaks = make_percentile_array(data_min_max=data_min_max, 
-                                                           data=data, 
-                                                           no_data_value=no_data_value,
-                                                           color_list=EMerald_custom_colors_hexcolorcodes,
-                                                           cmap_method=cmap_method, 
-                                                           plot_histograms=True)
-    #print(f"percentile_breaks = {percentile_breaks}")
-    #print(f"data_breaks = {data_breaks}")
-
+    data_breaks = make_percentile_array(data_min_max=data_min_max, 
+                                        data=data.copy(), 
+                                        no_data_value=no_data_value,
+                                        color_list=EMerald_custom_colors_hexcolorcodes,
+                                        cmap_method=cmap_method, 
+                                        plot_histograms=True,
+                                       )
+        
     # 2. Generate a custom colormap (EMeraldCustomColormap):
     if color_palette_name is None:
         color_palette_name = "EMeraldCustomTerrain"
-        EMeraldCustomColormap = build_EMerald_terrain_colormap(percentile_breaks)
+        percentile_breaks = (data_breaks - data_min_max[0]) / (data_min_max[1] - data_min_max[0])
+        EMeraldCustomColormap = build_EMerald_terrain_colormap(percentile_breaks) # only valid for data clipped to this range
     else:
         EMeraldCustomColormap = mpl.colormaps.get_cmap(color_palette_name)
     EMeraldCustomColormap(0) #need this line for it to make a lut?!?
@@ -501,64 +493,108 @@ Input parameters:
     sbpath, ext = os.path.splitext(single_band_tiff_path)
     suffix=f"{color_palette_name}_{data_min_max[0]}_to_{data_min_max[1]}_{cmap_method}"
     new_multiband_lut_path = f"{sbpath}_{suffix}"
-    new_multiband_tiff_path = f"{sbpath}_rgba_{suffix}"
     
+    luts = build_color_lookup_tables(cmap=EMerald_custom_colors_hexcolorcodes,
+                                     data_breaks=data_breaks,
+                                     dtype=data[0,0].dtype,
+                                     no_data_value=no_data_value,
+                                     new_multiband_lut_path=new_multiband_lut_path,
+                                     single_band_tiff_path=single_band_tiff_path,
+                                     write_lut_files=generate_lookup_tables,
+                                    )
+    if not generate_lookup_tables:
+        rgba_lut_dict = luts
+        #print(f"rgba_lut_dict = \n{rgba_lut_dict}")
+    elif generate_lookup_tables:
+        rgba_lut_dict = luts[0]
+        outfilepaths = luts[1]
+        #print(f"rgba_lut_dict = \n{rgba_lut_dict}")
+        for fp in outfilepaths:
+            print(f"Wrote LUT files to: '{fp}'")
+    
+    data_with_nan = data.copy().astype(float)
+    if no_data_value is not None:
+        data_with_nan[data==no_data_value]=np.nan
+    clip_data_with_nan = np.clip(data_with_nan, data_min_max[0], data_min_max[1],)
+        
     if plot_rgba_raster:
         figsize = [15, 9]
         fig,ax=plt.subplots(1,1,figsize=figsize)
-        ep.plot_bands(data_with_nan,
+        ep.plot_bands(clip_data_with_nan,
+                      #data_with_nan,
                       cmap = EMeraldCustomColormap,
                       title=f"{sbpath.split(os.path.sep)[-1]}\n{suffix.replace('_', ' ')}",
                       ax=ax,
                      )
         plt.tight_layout()
         plt.show()    
-
-    if generate_lookup_tables:
-        outfilepaths = build_1_component_color_tables(cmap=EMerald_custom_colors_hexcolorcodes,
-                                                      data_breaks=data_breaks,
-                                                      #data=data,
-                                                      dtype=data[0,0].dtype,
-                                                      no_data_value=no_data_value,
-                                                      new_multiband_lut_path=new_multiband_lut_path,
-                                                     )
-        for fp in outfilepaths:
-            print(f"Wrote 1component LUT files to: '{fp}'")
-
-        outfilepaths = build_4_component_color_tables(cmap=EMeraldCustomColormap,
-                                                      data_breaks=data_breaks,
-                                                      percentile_breaks=percentile_breaks,
-                                                      #data=data,
-                                                      dtype=data[0,0].dtype,
-                                                      no_data_value=no_data_value,
-                                                      new_multiband_lut_path=new_multiband_tiff_path,
-                                                      single_band_tiff_path=single_band_tiff_path,
-                                                     )
-        for fp in outfilepaths:
-            print(f"wrote 4component Lut files to: '{fp}''")
     
     if output_tif:
-        # apply EMeraldCustomColormap to data
-        rgba_data = EMeraldCustomColormap(normalized_data_with_nan) * (colormap_length-1)  # Scale to 0-255 range
-        
-        # 3. Convert to RGB Channels:
-        rgb_data = rgba_data[:, :, :3]  # Extract RGB channels
-        
-        # 4. Generate an Alpha Channel:
-        alpha_channel = (data != no_data_value).astype('uint8') * (colormap_length-1)
-        rgba_data[:, :, 3] = alpha_channel
-        
-        # 5. Write the New RGBA GeoTIFF:
-        newprofile = origprofile.copy()
-        newprofile.update(count=4, dtype='uint8', nodata=None)  # RGBA format
-        
-        with rasterio.open(f"{new_multiband_tiff_path}.tif", 'w', **newprofile) as dst:
-            dst.write(rgba_data[:, :, 0].astype('uint8'), 1) #red
-            dst.write(rgba_data[:, :, 1].astype('uint8'), 2) #green
-            dst.write(rgba_data[:, :, 2].astype('uint8'), 3) #blue
-            dst.write(rgba_data[:, :, 3].astype('uint8'), 4) #alpha
+        write_1_channel_geotifff = True
+        write_4_channel_geotifff = False
+
+        if write_1_channel_geotifff:
+            # Normalize the clipped data to 1 to 255 range # shift min to zero, divide by the range (reserving 0 for no data)
+            norm_clip_data_with_dumb = np.round(((clip_data_with_nan - data_min_max[0]) / (data_min_max[1] - data_min_max[0])) * 254)+1
+            filt = data == no_data_value
+            norm_clip_data_with_dumb[filt] = 0
+            
+            norm_rgba_lut_dict = {}
+            for key,value in rgba_lut_dict.items():
+                new_key = (np.round(((key - data_min_max[0]) / (data_min_max[1] - data_min_max[0])) * 254)+1).astype('uint8')
+                norm_rgba_lut_dict[new_key] = value
+            norm_rgba_lut_dict[0] = (127, 127, 127, 0)
+            norm_rgba_lut_df = pd.DataFrame.from_dict(norm_rgba_lut_dict, orient='index', columns=['r', 'g', 'b', 'a'])
+            norm_rgba_lut_df.reset_index(names='pix_val', inplace=True)
+            for ii in range(0, 256):
+                if ii not in norm_rgba_lut_df.pix_val.values:
+                    new_row = {'pix_val':ii, 'r':np.nan, 'g':np.nan, 'b':np.nan, 'a':np.nan} # fill new rows with nans
+                    norm_rgba_lut_df = pd.concat([norm_rgba_lut_df, pd.DataFrame([new_row])], ignore_index=True)
+            norm_rgba_lut_df.sort_values(by='pix_val', ignore_index=True, inplace=True)
+            norm_rgba_lut_df.interpolate(inplace=True) #fill in all nans
+            norm_rgba_lut_df = norm_rgba_lut_df.round().astype('uint8')
     
-        print(f"New RGBA geotiff '{new_multiband_tiff_path}' generated successfully!")
-    return EMeraldCustomColormap, data_breaks, percentile_breaks
+            # build dictionary {key1: (r1, g1, b1, a1), ..., keyn: (rn, gn, bn, an)}
+            new_norm_rgba_lut_dict={}
+            for pix_val in norm_rgba_lut_df.pix_val.values: 
+                new_norm_rgba_lut_dict[pix_val] = (norm_rgba_lut_df.loc[norm_rgba_lut_df.pix_val==pix_val,'r'].values[0],
+                                                   norm_rgba_lut_df.loc[norm_rgba_lut_df.pix_val==pix_val,'g'].values[0],
+                                                   norm_rgba_lut_df.loc[norm_rgba_lut_df.pix_val==pix_val,'b'].values[0],
+                                                   norm_rgba_lut_df.loc[norm_rgba_lut_df.pix_val==pix_val,'a'].values[0],)
+    
+            norm_clip_data_with_dumb = np.array(norm_clip_data_with_dumb, dtype='uint8')
+        
+            newprofile = origprofile.copy()
+            newprofile.update(dtype='uint8', nodata=0)  # RGBA format
+
+            with rasterio.open(f"{new_multiband_lut_path}.tif", 'w', **newprofile) as dst:
+                dst.write(norm_clip_data_with_dumb, indexes=1)
+                dst.write_colormap(1, new_norm_rgba_lut_dict)
+        
+        if write_4_channel_geotifff:
+            # Normalize the clipped data to the [0, 1] range
+            normalized_data_with_nan = (clip_data_with_nan - data_min_max[0]) / (data_min_max[1] - data_min_max[0])
+
+            # apply EMeraldCustomColormap to data
+            rgba_data = EMeraldCustomColormap(normalized_data_with_nan) * (colormap_length-1)  # Scale to 0-255 range
+            
+            # 3. Generate an Alpha Channel and overwrite:
+            alpha_channel = (data != no_data_value).astype('uint8') * (colormap_length-1) # 0 or 255
+            rgba_data[:, :, 3] = alpha_channel
+            
+            # 5. Write the New RGBA GeoTIFF:
+            newprofile = origprofile.copy()
+            newprofile.update(count=4, dtype='uint8', nodata=None)  # RGBA format
+ 
+            new_multiband_tiff_path = f"{sbpath}_rgba_{suffix}"
+
+            with rasterio.open(f"{new_multiband_tiff_path}.tif", 'w', **newprofile) as dst:
+                dst.write(rgba_data[:, :, 0].round().astype('uint8'), 1) #red
+                dst.write(rgba_data[:, :, 1].round().astype('uint8'), 2) #green
+                dst.write(rgba_data[:, :, 2].round().astype('uint8'), 3) #blue
+                dst.write(rgba_data[:, :, 3].round().astype('uint8'), 4) #alpha
+        
+            print(f"New RGBA geotiff '{new_multiband_tiff_path}' generated successfully!")
+    return EMeraldCustomColormap, data_breaks
 
 ######################################
