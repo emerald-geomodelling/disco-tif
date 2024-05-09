@@ -15,8 +15,7 @@ def stoday():
     return datetime.datetime.now().strftime("%Y%m%d")
 
 def generate_LUT_based_mapfile(single_band_tiff_path, mapfile_path, writeLUTs=True, writeTifs=False, writeHillshades=True):
-    '''
-    funtion to take two geotiffs (single band and multiband) and generate a multi-layer mapsource mapfile
+    """Function to take two geotiffs (single band and multiband) and generate a multi-layer mapsource mapfile
     single_band_tiff_path: path to single band geotiff
     rgba_tiff_path: path to multiband geotiff
     mapfile_path: path of output mapfile
@@ -24,18 +23,21 @@ def generate_LUT_based_mapfile(single_band_tiff_path, mapfile_path, writeLUTs=Tr
     
     - mapfile_path:
     
-    - writeLUTs=True:
+    - writeLUTs:
+        Default: True:
     
-    - writeTifs=False:
+    - writeTifs:
+        Default: False:
     
-    - writeHillshades=True
-    '''
+    - writeHillshades:
+        Default: True
+    """
 
-    #print(f"single_band_tiff_path = {single_band_tiff_path}")
+    # print(f"single_band_tiff_path = {single_band_tiff_path}")
     single_band_tiff_dir = os.path.dirname(single_band_tiff_path)
-    #print(f"single_band_tiff_dir  = {single_band_tiff_dir}")
+    # print(f"single_band_tiff_dir  = {single_band_tiff_dir}")
     single_band_file = (single_band_tiff_path.split(single_band_tiff_dir)[1]).split(os.path.sep)[1]
-    #print(f"single_band_file  = {single_band_file}")
+    # print(f"single_band_file  = {single_band_file}")
     
     lut_files_1b = []
     lut_files_4b = []
@@ -45,33 +47,33 @@ def generate_LUT_based_mapfile(single_band_tiff_path, mapfile_path, writeLUTs=Tr
                 lut_files_1b.append(file[:-6])
             elif np.logical_and('rgba' in file, file.endswith(".lut")):
                 lut_files_4b.append(file)
-    #print(f"lut_files = {lut_files}")
+    # print(f"lut_files = {lut_files}")
 
     hillshade_files = []
     tif_files = []
     for file in os.listdir(single_band_tiff_dir):
         if file.startswith(os.path.splitext(single_band_file)[0]):
-            #if file.endswith("hillshade.tif"):
+            # if file.endswith("hillshade.tif"):
             if np.logical_and('hillshade' in file, file.endswith(".tif")):
                 hillshade_files.append(file)
             elif file.endswith(".tif"):
                 tif_files.append(file)
-    tif_files = [tiff for tiff in tif_files if tiff!=single_band_file]
+    tif_files = [tiff for tiff in tif_files if tiff != single_band_file]
     hillshade_files = sorted(hillshade_files)
     tif_files = sorted(tif_files)
 
     # Open the single-band GeoTIFF
     with rasterio.open(single_band_tiff_path, 'r') as src:
         data = src.read(1)  # Read the first band
-        #origprofile = src.profile
+        # origprofile = src.profile
         extent = src.bounds
         size = (src.width, src.height)
         epsg_code = src.crs.to_epsg() if src.crs else None
         no_data_value = src.nodata  # Get the no-data value from the GeoTIFF
 
-    no_data_value = np.array(no_data_value, dtype=data[0,0].dtype).tolist()
-    data_min_max = np.min(data[data!=no_data_value]), np.max(data)
-    #print(data_min_max)
+    no_data_value = np.array(no_data_value, dtype=data[0, 0].dtype).tolist()
+    data_min_max = np.min(data[data != no_data_value]), np.max(data)
+    # print(data_min_max)
     
     # Define the paths to your GeoTIFF files
     name = single_band_file.split('.')[0]
@@ -146,8 +148,8 @@ MAP
         for tiff in tif_files:
             # Open the single-band GeoTIFF
             with rasterio.open(os.path.join(single_band_tiff_dir, tiff), 'r') as src:
-                #data = src.read(1)  # Read the first band
-                #origprofile = src.profile
+                # data = src.read(1)  # Read the first band
+                # origprofile = src.profile
                 extent = src.bounds
                 size = (src.width, src.height)
                 epsg_code = src.crs.to_epsg() if src.crs else None
@@ -168,8 +170,8 @@ MAP
         for hillshade in hillshade_files:
             # Open the single-band GeoTIFF
             with rasterio.open(os.path.join(single_band_tiff_dir, hillshade), 'r') as src:
-                #data = src.read(1)  # Read the first band
-                #origprofile = src.profile
+                # data = src.read(1)  # Read the first band
+                # origprofile = src.profile
                 extent = src.bounds
                 size = (src.width, src.height)
                 epsg_code = src.crs.to_epsg() if src.crs else None
@@ -203,8 +205,7 @@ END
 ######################################
 
 def generate_tiff_based_mapfile(single_band_tiff_path, rgba_tiff_path, mapfile_path):
-    '''
-    funtion to take two geotiffs (single band and multiband) and generate a multi-layer mapsource mapfile
+    """Function to take two geotiffs (single band and multiband) and generate a multi-layer MapSource mapfile
     single_band_tiff_path: path to single band geotiff
     rgba_tiff_path: path to multiband geotiff
     mapfile_path: path of output mapfile
@@ -214,7 +215,7 @@ def generate_tiff_based_mapfile(single_band_tiff_path, rgba_tiff_path, mapfile_p
     - rgba_tiff_path:
     
     - mapfile_path
-    '''
+    """
     # Open the single-band GeoTIFF
     with rasterio.open(single_band_tiff_path, 'r') as src:
         data = src.read(1)  # Read the first band
