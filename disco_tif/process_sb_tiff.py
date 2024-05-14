@@ -438,7 +438,6 @@ Input parameters:
                                                                     dtype=data[0, 0].dtype,
                                                                     no_data_value=None,
                                                                     lut_outpath_base=lut_outpath_base,
-                                                                    single_band_tiff_path=None,
                                                                     short_file=short_files)
         # disco_tif.look_up_tables.rast_dat_to_single_channel_rgba_luts(cmap=EMerald_custom_colors_hexcolorcodes,
         #                                                               data_breaks=data_breaks,
@@ -472,7 +471,6 @@ Input parameters:
                                                                     dtype=data[0, 0].dtype,
                                                                     no_data_value=no_data_value,
                                                                     lut_outpath_base=lut_outpath_base,
-                                                                    single_band_tiff_path=None,
                                                                     short_file=short_files)
         # disco_tif.look_up_tables.uint8dat_to_single_channel_rgba_luts(cmap=EMerald_custom_colors_hexcolorcodes,
         #                                                               data_breaks=data_breaks,
@@ -532,7 +530,7 @@ Input parameters:
 
         outfilepath['single-band-tiff'] = f"{tif_outpath_base}.tif"
 
-    elif 'multi_band_rgba' in output_tif:
+    if 'multi_band_rgba' in output_tif:
         normalized_data_with_nan = (clip_data_with_nan - data_min_max[0]) / (data_min_max[1] - data_min_max[0])
         rgba_data = EMeraldCustomColormap(normalized_data_with_nan) * (colormap_length-1)  # Scale to 0-255 range
         
