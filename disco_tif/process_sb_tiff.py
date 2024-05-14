@@ -530,7 +530,7 @@ Input parameters:
 
         print(f"\nNew single-channel colorized geotiff written to: \n\t- '{tif_outpath_base}.tif'\n")
 
-        outfilepath['single-band-tiff'] = f"{tif_outpath_base}.tif")
+        outfilepath['single-band-tiff'] = f"{tif_outpath_base}.tif"
 
     elif 'multi_band_rgba' in output_tif:
         normalized_data_with_nan = (clip_data_with_nan - data_min_max[0]) / (data_min_max[1] - data_min_max[0])
