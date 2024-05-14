@@ -130,7 +130,7 @@ def make_percentile_array(data_min_max,
                           data,
                           no_data_value,
                           cmap_method='pseudo_hist_norm',
-                          color_list=copy.deepcopy(EMerald_custom_colors_hexcolorcodes),
+                          color_list=None,
                           plot_histograms=False):
     """Function to build a data driven percentile array based on the cmap method specified.
 Input Parameters:
@@ -151,11 +151,18 @@ Input Parameters:
     - plot_histograms: boolean parameter for plotting the percentage break points on top of a histogram of the data
         Default:  False
     """
+    if color_list is None:
+        color_list = copy(EMerald_custom_colors_hexcolorcodes)
+    else:
+        color_list = copy(color_list)
+
     if data_min_max is not None:
         assert len(data_min_max) == 2, 'len of data_min_max must be 2'
         assert data_min_max[0] < data_min_max[1], 'first value must be less than second value'
         assert data_min_max[1] > 0, 'This should really be a bigger number, but at least this will save dividing by a zero...'
-    
+
+    color_list = color_list.copy()
+
     datatype = str(data[0, 0].dtype)
     
     if data_min_max[0] < 0:
@@ -211,10 +218,6 @@ Input Parameters:
     if no_data_value is not None:
         no_dum_data[no_dum_data == no_data_value] = np.nan
     abs_min_max = [np.nanmin(no_dum_data), np.nanmax(no_dum_data)]
-    # percentile_breaks = np.round((np.array(data_breaks) - abs_min_max[0]) / (abs_min_max[1] - abs_min_max[0]), 4)  # relative to the specified min,max
-    percentile_breaks = np.round((np.array(data_breaks) - data_min_max[0]) / (data_min_max[1] - data_min_max[0]), 4)  # relative to the specified min,max
-    percentile_breaks = percentile_breaks.tolist()
-    # print(f"percentile_breaks = {percentile_breaks}")
 
     if plot_histograms:
         norm_no_dum_data = (no_dum_data.copy() - abs_min_max[0]) / (abs_min_max[1] - abs_min_max[0]) # shift to zero, then normalize by the range
@@ -303,7 +306,7 @@ def rast_dat_to_uint8_data(rast_dat, data_min_max, no_data_value):
 def make_rgba_tiff_from_single_Band(single_band_tiff_path, 
                                     data_min_max=None, 
                                     min_max_method='percentile', 
-                                    clip_perc=[1, 99], 
+                                    clip_perc=(1, 99),
                                     color_palette_name=None, 
                                     cmap_method='pseudo_hist_norm',
                                     output_tif='single_band_rgba',
@@ -413,8 +416,6 @@ Input parameters:
     suffix = f"{color_palette_name}_{data_min_max[0]}_to_{data_min_max[1]}_{cmap_method}"
     lut_outpath_base = f"{sbpath}_{suffix}"
     
-    rgba_lut_dict = disco_tif.look_up_tables.rgba_lut_dict_builder(cmap=EMerald_custom_colors_hexcolorcodes, data_breaks=data_breaks, dtype=data[0, 0].dtype)
-
     short_files = True
     # short_files=False
     
@@ -486,7 +487,7 @@ Input parameters:
         #                                                             lut_outpath_base=lut_outpath_base,
         #                                                             single_band_tiff_path=None,
         #                                                             short_file=short_files)
-        
+
     data_with_nan = data.copy().astype(float)
     if no_data_value is not None:
         data_with_nan[data == no_data_value] = np.nan
@@ -507,7 +508,12 @@ Input parameters:
         tif_outpath_base = lut_outpath_base
         
         uint8_rast_dat = rast_dat_to_uint8_data(rast_dat=data, data_min_max=data_min_max, no_data_value=no_data_value)
-        
+
+        rgba_lut_dict = disco_tif.look_up_tables.rgba_lut_dict_builder(cmap=EMerald_custom_colors_hexcolorcodes,
+                                                                       data_breaks=data_breaks,
+                                                                       no_data_value=no_data_value,
+                                                                       dtype=data[0, 0].dtype)
+
         new_uint8_rgba_lut_dict = disco_tif.look_up_tables.short_data_lut_to_long_uint8_lut(rgba_lut_dict, no_data_value=no_data_value)
         
         newprofile = origprofile.copy()
