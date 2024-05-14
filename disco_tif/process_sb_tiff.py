@@ -528,6 +528,8 @@ Input parameters:
 
         print(f"\nNew single-channel colorized geotiff written to: \n\t- '{tif_outpath_base}.tif'\n")
 
+        return EMeraldCustomColormap, data_breaks, f"{tif_outpath_base}.tif"
+
     elif output_tif == 'multi_band_rgba':
         normalized_data_with_nan = (clip_data_with_nan - data_min_max[0]) / (data_min_max[1] - data_min_max[0])
         rgba_data = EMeraldCustomColormap(normalized_data_with_nan) * (colormap_length-1)  # Scale to 0-255 range
@@ -549,6 +551,8 @@ Input parameters:
     
         print(f"\nNew 4-channel colorized geotiff written to: \n\t- '{new_multiband_tiff_path}.tif'\n")
 
-    return EMeraldCustomColormap, data_breaks
+        return EMeraldCustomColormap, data_breaks, f"{new_multiband_tiff_path}.tif"
+    else:
+        return EMeraldCustomColormap, data_breaks, 'No File Written'
 
 ######################################
