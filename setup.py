@@ -4,7 +4,7 @@ import os, sys
 from setuptools import setup, find_packages
 
 setup(name='disco-tif',
-      version="0.0.2",
+      version="0.0.3",
       url='https://github.com/emerald-geomodelling/disco-tif',
       author="Benjamin Bloss",
       author_email='bb@emrld.no',
