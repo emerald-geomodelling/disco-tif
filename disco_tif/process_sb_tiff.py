@@ -502,9 +502,11 @@ Input parameters:
                       title=f"{sbpath.split(os.path.sep)[-1]}\n{suffix.replace('_', ' ')}",
                       ax=ax)
         plt.tight_layout()
-        plt.show()    
+        plt.show()
 
-    if output_tif == 'single_band_rgba':
+    outfilepath = {}
+
+    if 'single_band_rgba' in output_tif:
         tif_outpath_base = lut_outpath_base
 
         uint8_rast_dat = rast_dat_to_uint8_data(rast_dat=data, data_min_max=data_min_max, no_data_value=no_data_value)
@@ -528,9 +530,9 @@ Input parameters:
 
         print(f"\nNew single-channel colorized geotiff written to: \n\t- '{tif_outpath_base}.tif'\n")
 
-        return EMeraldCustomColormap, data_breaks, f"{tif_outpath_base}.tif"
+        outfilepath['single-band-tiff'] = f"{tif_outpath_base}.tif")
 
-    elif output_tif == 'multi_band_rgba':
+    elif 'multi_band_rgba' in output_tif:
         normalized_data_with_nan = (clip_data_with_nan - data_min_max[0]) / (data_min_max[1] - data_min_max[0])
         rgba_data = EMeraldCustomColormap(normalized_data_with_nan) * (colormap_length-1)  # Scale to 0-255 range
         
@@ -550,9 +552,6 @@ Input parameters:
             dst.write(rgba_data[:, :, 3].round().astype('uint8'), 4)  # alpha
     
         print(f"\nNew 4-channel colorized geotiff written to: \n\t- '{new_multiband_tiff_path}.tif'\n")
+        outfilepath['multi-band-tiff'] = f"{new_multiband_tiff_path}.tif"
 
-        return EMeraldCustomColormap, data_breaks, f"{new_multiband_tiff_path}.tif"
-    else:
-        return EMeraldCustomColormap, data_breaks, 'No File Written'
-
-######################################
+    return EMeraldCustomColormap, data_breaks, outfilepath
