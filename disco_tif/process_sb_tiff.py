@@ -84,7 +84,7 @@ Input Parameters:
         custom_color_hex = custom_color_hex[1:]
     else:
         pass
-    
+
     assert len(breaks_by_percentages) == len(custom_color_hex), "The length of the breaks_by_percentages list but be the same as the length of custom_color_hex"
 
     if breaks_by_percentages[0] != 0:
@@ -93,7 +93,7 @@ Input Parameters:
     if breaks_by_percentages[-1] != 1:
         breaks_by_percentages.append(1)
         custom_color_hex.append(custom_color_hex[-1])
-    
+
     custom_color_rgb = []
     for hexcode in custom_color_hex:
         temp = hex_to_rgb(hexcode) 
@@ -118,7 +118,7 @@ Input Parameters:
 
 
 def build_EMerald_terrain_colormap(breaks_by_percentages):
-    EMeraldCustomColormap = build_custom_colormap(breaks_by_percentages=breaks_by_percentages, 
+    EMeraldCustomColormap = build_custom_colormap(breaks_by_percentages=breaks_by_percentages,
                                                   custom_color_hex=copy.deepcopy(EMerald_custom_colors_hexcolorcodes),
                                                   new_cmap_name="EMerald_Custom_Colormap")
     return EMeraldCustomColormap
@@ -136,10 +136,10 @@ def make_percentile_array(data_min_max,
 Input Parameters:
     - data_min_max: list containing the minimum and maximum values to display. values outside this range will be saturated to the end members.
         ex: [min, max]
-    
+
     - data: 2D array of cell values of the raster.
         ex: ([[x1y1, ..., xny1], [x1y2, ..., xny2], ..., [x1yn, ..., xnyn]])
-        
+
     - no_data_value: Value that specifies the no_data_value
     
     - cmap_method: parameter to tell the program how to bin the data. Options are 'pseudo_hist_norm', or 'pseudo_linear'
@@ -164,7 +164,7 @@ Input Parameters:
     color_list = color_list.copy()
 
     datatype = str(data[0, 0].dtype)
-    
+
     if data_min_max[0] < 0:
         bz_num_color = 1  # number of colors for below zero
     else:
@@ -182,7 +182,7 @@ Input Parameters:
     clip_data = np.clip(clip_data, data_min_max[0], data_min_max[1])
     az_clip_data = clip_data.copy()
     az_clip_data = az_clip_data[az_clip_data >= 0]
-    
+
     if cmap_method == 'pseudo_linear':
         az_min = np.max([0, data_min_max[0]])  # above_zero_min: if data_min_max[0]<0, then 0; if data_min_max[0]>=0, then data_min_max[0].
         # print(f"az_min = {az_min}")
@@ -248,7 +248,7 @@ def calc_data_min_max(data, no_data_value, clip_perc=None, min_max_method='data_
 Input Parameters:
     - data: 2D array of cell values of the raster.
         ex: ([[x1y1, ..., xny1], [x1y2, ..., xny2], ..., [x1yn, ..., xnyn]])
-        
+
     - no_data_value: value the defines the no-data-value
     
     - clip_perc: list of percentile (quartile) values to clip the data to. i.e. [1, 99] for clip to the fist and 99th percentiles of the data (essentially, exclude erroneous high or low points). This is only relevant if the min_max_method is 'percentile'.
@@ -280,21 +280,21 @@ Input Parameters:
 
 def rast_dat_to_uint8_data(rast_dat, data_min_max, no_data_value):
     """Function to map raster data to uint8 data. no-data values are mapped to 0 if they exist and then data would be mapped 1-255. If no_data is none then the data will be mapped 0-255
-    
+
     """
     rast_dat_with_nan = rast_dat.copy().astype(float)
     
     if no_data_value is not None:
         filt = rast_dat == no_data_value
         rast_dat_with_nan[filt] = np.nan
-    
+
     clip_rast_dat_with_nan = np.clip(rast_dat_with_nan, data_min_max[0], data_min_max[1],)
     
     if no_data_value is None:
         uint8_rast_dat_with_dumb = (np.round(((clip_rast_dat_with_nan - data_min_max[0]) / (data_min_max[1] - data_min_max[0])) * 255))
     elif no_data_value is not None:
         uint8_rast_dat_with_dumb = (np.round(((clip_rast_dat_with_nan - data_min_max[0]) / (data_min_max[1] - data_min_max[0])) * 254)+1)
-    
+
     if no_data_value is not None:
         uint8_rast_dat_with_dumb[filt] = 0
     uint8_rast_dat_with_dumb = uint8_rast_dat_with_dumb.astype('uint8')
@@ -303,7 +303,7 @@ def rast_dat_to_uint8_data(rast_dat, data_min_max, no_data_value):
 ######################################
 
 
-def make_rgba_tiff_from_single_Band(single_band_tiff_path, 
+def make_rgba_tiff_from_single_Band(single_band_tiff_path,
                                     data_min_max=None, 
                                     min_max_method='percentile', 
                                     clip_perc=(1, 99),
@@ -329,7 +329,7 @@ Input parameters:
  - min_max_method:
      Default: 'percentile'; only relevant if data_min_max==None.
      Also accepts 'data_absolute'. 
-     'percentile' uses the percentiles supplied in clip_perc. 
+     'percentile' uses the percentiles supplied in clip_perc.
      'data_absolute' uses the minimum and maximum values of the data supplied to the function
  
  - clip_perc
@@ -355,19 +355,19 @@ Input parameters:
  - generate_lookup_tables:
      Default = False
      If set to True look up tables will be generated and written to file. This includes a look up table that can be applied to the single-band geotiff in QGIS and maybe other GIS software.
- 
+
  - generate_QGIS_lut: Option to write a GIS software compatible colorization file to disk
      Default: True
- 
+
  - generate_rgba_luts: Option to write data values to rgba look-up-tables to disk.
      Default: False
- 
- - generate_data_uint8_lut: Option to write look-up-table to covert data to uint8 values. 
+
+ - generate_data_uint8_lut: Option to write look-up-table to covert data to uint8 values.
      Default: False
- 
+
  - generate_uint8_luts: Option to write uint8-data values to rgba look-up-tables to disk.
      Default: False
- 
+
  - plot_rgba_raster: option to plot raster to screen. If set to True this will generate new matplotlib figures.
      Default: False
     """
@@ -394,13 +394,13 @@ Input parameters:
         data_min_max = calc_data_min_max(data, no_data_value, clip_perc, min_max_method=min_max_method)
 
     # make percentile ranges
-    data_breaks = make_percentile_array(data_min_max=data_min_max, 
-                                        data=data.copy(), 
+    data_breaks = make_percentile_array(data_min_max=data_min_max,
+                                        data=data.copy(),
                                         no_data_value=no_data_value,
                                         color_list=EMerald_custom_colors_hexcolorcodes,
-                                        cmap_method=cmap_method, 
+                                        cmap_method=cmap_method,
                                         plot_histograms=True)
-        
+
     # 2. Generate a custom colormap (EMeraldCustomColormap):
     if color_palette_name is None:
         color_palette_name = "EMeraldCustomTerrain"
@@ -415,7 +415,7 @@ Input parameters:
     sbpath, ext = os.path.splitext(single_band_tiff_path)
     suffix = f"{color_palette_name}_{data_min_max[0]}_to_{data_min_max[1]}_{cmap_method}"
     lut_outpath_base = f"{sbpath}_{suffix}"
-    
+
     short_files = True
     # short_files=False
     
@@ -492,7 +492,7 @@ Input parameters:
     if no_data_value is not None:
         data_with_nan[data == no_data_value] = np.nan
     clip_data_with_nan = np.clip(data_with_nan, data_min_max[0], data_min_max[1],)
-        
+
     if plot_rgba_raster:
         figsize = [15, 9]
         fig, ax = plt.subplots(1, 1, figsize=figsize)
@@ -503,10 +503,10 @@ Input parameters:
                       ax=ax)
         plt.tight_layout()
         plt.show()    
-    
+
     if output_tif == 'single_band_rgba':
         tif_outpath_base = lut_outpath_base
-        
+
         uint8_rast_dat = rast_dat_to_uint8_data(rast_dat=data, data_min_max=data_min_max, no_data_value=no_data_value)
 
         rgba_lut_dict = disco_tif.look_up_tables.rgba_lut_dict_builder(cmap=EMerald_custom_colors_hexcolorcodes,
@@ -515,7 +515,7 @@ Input parameters:
                                                                        dtype=data[0, 0].dtype)
 
         new_uint8_rgba_lut_dict = disco_tif.look_up_tables.short_data_lut_to_long_uint8_lut(rgba_lut_dict, no_data_value=no_data_value)
-        
+
         newprofile = origprofile.copy()
         if no_data_value is None:
             newprofile.update(dtype='uint8', nodata=None)  # RGBA format
@@ -527,7 +527,7 @@ Input parameters:
             dst.write_colormap(1, new_uint8_rgba_lut_dict)
 
         print(f"\nNew single-channel colorized geotiff written to: \n\t- '{tif_outpath_base}.tif'\n")
-    
+
     elif output_tif == 'multi_band_rgba':
         normalized_data_with_nan = (clip_data_with_nan - data_min_max[0]) / (data_min_max[1] - data_min_max[0])
         rgba_data = EMeraldCustomColormap(normalized_data_with_nan) * (colormap_length-1)  # Scale to 0-255 range
@@ -535,7 +535,7 @@ Input parameters:
         alpha_channel = (data != no_data_value).astype('uint8') * (colormap_length-1)  # 0 or 255
 
         rgba_data[:, :, 3] = alpha_channel
-        
+
         newprofile = origprofile.copy()
         newprofile.update(count=4, dtype='uint8', nodata=None)  # RGBA format
 
@@ -548,7 +548,7 @@ Input parameters:
             dst.write(rgba_data[:, :, 3].round().astype('uint8'), 4)  # alpha
     
         print(f"\nNew 4-channel colorized geotiff written to: \n\t- '{new_multiband_tiff_path}.tif'\n")
-        
+
     return EMeraldCustomColormap, data_breaks
 
 ######################################
