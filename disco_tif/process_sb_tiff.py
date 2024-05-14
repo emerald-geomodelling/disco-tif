@@ -152,9 +152,9 @@ Input Parameters:
         Default:  False
     """
     if color_list is None:
-        color_list = copy(EMerald_custom_colors_hexcolorcodes)
+        color_list = copy.deepcopy(EMerald_custom_colors_hexcolorcodes)
     else:
-        color_list = copy(color_list)
+        color_list = copy.deepcopy(color_list)
 
     if data_min_max is not None:
         assert len(data_min_max) == 2, 'len of data_min_max must be 2'
