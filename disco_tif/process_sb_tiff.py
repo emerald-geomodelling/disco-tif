@@ -383,7 +383,7 @@ Input parameters:
     # Open the single-band GeoTIFF
     with rasterio.open(single_band_tiff_path, 'r') as src:
         data = src.read(1)  # Read the first band
-        origprofile = src.profile
+        orig_profile = src.profile
         extent = src.bounds
         size = (src.width, src.height)
         epsg_code = src.crs.to_epsg() if src.crs else None
@@ -516,13 +516,13 @@ Input parameters:
 
         new_uint8_rgba_lut_dict = disco_tif.look_up_tables.short_data_lut_to_long_uint8_lut(rgba_lut_dict, no_data_value=no_data_value)
 
-        newprofile = origprofile.copy()
+        new_profile = orig_profile.copy()
         if no_data_value is None:
-            newprofile.update(dtype='uint8', nodata=None)  # RGBA format
+            new_profile.update(dtype='uint8', nodata=None)  # RGBA format
         elif no_data_value is not None:
-            newprofile.update(dtype='uint8', nodata=0)  # RGBA format
+            new_profile.update(dtype='uint8', nodata=0)  # RGBA format
         
-        with rasterio.open(f"{tif_outpath_base}.tif", 'w', **newprofile) as dst:
+        with rasterio.open(f"{tif_outpath_base}.tif", 'w', **new_profile) as dst:
             dst.write(uint8_rast_dat, indexes=1)
             dst.write_colormap(1, new_uint8_rgba_lut_dict)
 
@@ -538,12 +538,12 @@ Input parameters:
 
         rgba_data[:, :, 3] = alpha_channel
 
-        newprofile = origprofile.copy()
-        newprofile.update(count=4, dtype='uint8', nodata=None)  # RGBA format
+        new_profile = orig_profile.copy()
+        new_profile.update(count=4, dtype='uint8', nodata=None)  # RGBA format
 
         new_multiband_tiff_path = f"{sbpath}_rgba_{suffix}"
 
-        with rasterio.open(f"{new_multiband_tiff_path}.tif", 'w', **newprofile) as dst:
+        with rasterio.open(f"{new_multiband_tiff_path}.tif", 'w', **new_profile) as dst:
             dst.write(rgba_data[:, :, 0].round().astype('uint8'), 1)  # red
             dst.write(rgba_data[:, :, 1].round().astype('uint8'), 2)  # green
             dst.write(rgba_data[:, :, 2].round().astype('uint8'), 3)  # blue

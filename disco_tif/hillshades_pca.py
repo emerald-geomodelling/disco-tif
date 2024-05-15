@@ -16,20 +16,43 @@ import disco_tif.geotiff_plotting
 
 #################################################
 
-def build_hs_az_al(start_al, al_inc, num_al_angles, start_az, num_az_angles):
-    """description
-Input Parameters:
-    - start_al:
+def build_hs_az_al( start_az=45, num_az_angles=4, start_al=30, al_inc=30, num_al_angles=2,):
+    """Generate valid azimuths and altitude angles for use in generating hillshade rasters.
     
-    - al_inc:
+Parameters
+----------
+start_az : int or float (default = 45)
+    Starting azimuth angle. Valid angles are between 0 and 360
+
+num_az_angles : int (default = 4)
+    Number of azimuths to generate. Must be greater than 1.
+
+start_al : int or float (default = 30°)
+    Starting altitude angle. Valid angles are between 0 and 90
+
+al_inc : int or float (default = 30°)
+    Altitude increment. First altitude angle will be 'start_al'.
+    Second altitude angle will be start_al + al_inc, etc.
     
-    - num_al_angles:
+num_al_angles : int (default = 2)
+    Number of altitude angles to generate. Must be greater than 1.
+    start_al + (al_inc * (num_al_angles - 1)) <= 90
     
-    - start_az:
+Returns
+-------
+azimuths : list of azimuth angles
     
-    - num_az_angles
+altitudes : list of altitude angles
     """
-    azimuths = np.linspace(start_az, start_az+360, num_az_angles+1)  # degrees 0=360, number of divisions + 1 because start=end
+    assert start_az >= 0, 'starting azimuth must be greater than or equal to 0°'
+    assert start_az <= 360, 'starting azimuth must be less than or equal to 360°'
+    assert num_az_angles >= 1, 'Number of azimuths must be greater than or equal to 1'
+    assert start_al >= 0, 'starting altitude angle must be greater than or equal to 0°'
+    assert start_al <= 90, 'starting altitude angle must be less then or equal to 90°'
+    assert num_al_angles >= 1, 'Number of altitude angles must be greater than or equal to 1'
+    assert start_al + (al_inc * (num_al_angles-1)) <= 90, 'The combination of altitude angle parameters generates angles larger than 90°'
+
+    azimuths = np.linspace(start_az, start_az+360, num_az_angles+1)
     filt = azimuths >= 360
     while filt.sum() > 0:
         azimuths[filt] = azimuths[filt]-360
@@ -38,22 +61,34 @@ Input Parameters:
     azimuths = sorted(azimuths)
     print(f"azimuths = {azimuths}")
     
-    altitudes = np.linspace(start_al, (al_inc*num_al_angles)+start_al, num_al_angles+1)
+    altitudes = np.linspace(start_al, (al_inc*(num_al_angles-1))+start_al, num_al_angles)
     altitudes = altitudes[:-1].astype(int).tolist()
     print(f"altitudes = {altitudes}")
     return azimuths, altitudes
 
-def write_raster_dict_data_to_geotiff(single_band_tiff_path, origprofile, raster_data_dict, len_hs=None):
-    """description
-Input Parameters:
-    - single_band_tiff_path:
+def write_raster_dict_data_to_geotiff(single_band_tiff_path, orig_profile, raster_data_dict, len_hs=None):
+    """Take a dictionary of hillshade or PCA component rasters and writes them disk.
+
+Parameters
+----------
+single_band_tiff_path : str
+    Path to the original, single-band, geotiff
     
-    - origprofile:
+orig_profile : dict
+    The original profile from the original single band geotiff
     
-    - raster_data_dict:
+raster_data_dict : dict
+    Dictionary containing hillshade rasters where the key is the name of the hillshade and the value is the hillshade
     
-    - len_hs=None
+len_hs : int (default = None)
+    Only valid for a raster_data_dict that contains PCA rasters. The number of hillshades that went into making the PCA components
+
+Returns
+-------
+new_geotiff_paths : dict
+    Dictionary of paths to the new geotiffs
     """
+    new_geotiff_paths = {}
     for key, value in raster_data_dict.items():
         if 'component' in key:
             assert len_hs is not None, "'len_hs' cannot be none if passing in a pca_dictionary_object"
@@ -61,28 +96,43 @@ Input Parameters:
         else:
             new_tiff_path = f"{single_band_tiff_path.split('.tif')[0]}_hillshade_{key}.tif"
         
-        newprofile = origprofile.copy()
-        newprofile.update(dtype=str((value[0, 0]).dtype), nodata=np.nan)
+        new_profile = orig_profile.copy()
+        new_profile.update(dtype=str((value[0, 0]).dtype), nodata=np.nan)
            
-        with rasterio.open(new_tiff_path, 'w', **newprofile) as dst:
+        with rasterio.open(new_tiff_path, 'w', **new_profile) as dst:
             dst.write(arr=value, indexes=1, masked=True)
     
+        new_geotiff_paths[key] = new_tiff_path
         print(f"New single-channel geotiff generated successfully: '{new_tiff_path}'")
+    return new_geotiff_paths
         
 
 def MakeHillShadePCA(hillshades, plot_figures=False, raster_data=None, cmap='terrain', n_components=3):
     """description
-Input Parameters:
-    - hillshades:
+Parameters
+----------
+hillshades : dict
+    Dictionary of hillshades, where the key contains azimuth and altitude pairs, and the value is the hillshade raster
+
+plot_figures : bool (default = False)
+    Switch to plot the newly generated PCA components to screen
+
+raster_data : 2D numpy array (default=None)
+    Used only if plot_figures = True
+    Used for plotting the new PCA components as an overlay on the original data.
+
+cmap : mpl-like colormap (default = 'terrain')
+    Matplotlib-like color map. Either a colormap can be passed or a named mpl colormap can be passed.
     
-    - plot_figures=False:
-    
-    - raster_data=None:
-    
-    - cmap='terrain':
-    
-    - n_components=3
+n_components : int (default = 3)
+    The number of PCA components to generate. This number must be less than the number of hillshades
+
+Returns
+-------
+pcaComponents : dict
+    Dictionary of PCA components
     """
+    assert n_components < len(hillshades), 'The number of PCA components must be less than the number of hillshades being evaluated.'
     if plot_figures:
         assert raster_data is not None, "raster data must be supplied if plot_figures is true"
         
@@ -107,12 +157,11 @@ Input Parameters:
     
     pcaout = pca.fit(flat_hillshades).transform(flat_hillshades)
 
-    data = hillshades[list(hillshades.keys())[0]]
+    data = hillshades[list(hillshades.keys())[0]] # grab the first entry to get the shape of the raster
     
     nrow = data.shape[0]
     ncol = data.shape[1]
-    nlay = len(pcaout[0])
-    
+
     dumarray = np.ones([nrow * ncol])*np.nan
     
     pcaComponents = {}
@@ -132,45 +181,54 @@ Input Parameters:
                                                                             raster_data_dict=pcaComponents,
                                                                             nrows=1,
                                                                             ncols=n_components)
-    
-    # pcaComponents['component_1_0_1'] = (           pcaComponents['component_1'] - np.nanmin(pcaComponents['component_1'])) / \
-    #                                    (np.nanmax(pcaComponents['component_1']) - np.nanmin(pcaComponents['component_1']))
-    
-    # pcaComponents['component_2_0_1'] = (           pcaComponents['component_2'] - np.nanmin(pcaComponents['component_2'])) / \
-    #                                    (np.nanmax(pcaComponents['component_2']) - np.nanmin(pcaComponents['component_2']))
-    
-    # pcaComponents['component_3_0_1'] = (           pcaComponents['component_3'] - np.nanmin(pcaComponents['component_3'])) / \
-    #                                    (np.nanmax(pcaComponents['component_3']) - np.nanmin(pcaComponents['component_3']))
                                                                                                                    
     return pcaComponents
     
 
-def build_hillshade(single_band_tiff_path, data_min_max,  hs_azimuths, hs_altitudes, cmap='terrain', process_pca=False, plot_figures=False):
+def build_hillshade(single_band_tiff_path, data_min_max, hs_azimuths, hs_altitudes, cmap='terrain', process_pca=False, plot_figures=False, **kwargs):
     """description
-Input Parameters:
-    - single_band_tiff_path:
+
+Parameters
+----------
+single_band_tiff_path : str
+    Path to the original single-band-tiff
     
-    - data_min_max:
+data_min_max : list or tuple
+    Must be of length 2
+    Minimum and maximum values to clipe the raster values to.
     
-    - hs_azimuths:
+hs_azimuths : list
+    List of azimuths to generate hillshades with
     
-    - hs_altitudes:
+hs_altitudes : list
+    List of altitude angles to generate hillshades with
     
-    - cmap='terrain':
+cmap : mpl-like colormap (default = 'terrain')
+        Matplotlib-like color map. Either a colormap can be passed or a named mpl colormap can be passed.
+
+process_pca : bool (default = False)
+    Switch to generate PCA components
     
-    - process_pca=False:
-    
-    - plot_figures=False
+plot_figures : bool (default = False)
+    Switch to plot figures to screen
+
+Returns
+-------
+hillshades, hillshade_file_paths,
+hillshades, pcaComponents, hillshade_file_paths
+
     """
+    assert len(data_min_max) == 2, 'len(data_min_max) must be 2'
+
     # read geotiff and minimally process for the colormap function
     with rasterio.open(single_band_tiff_path, 'r') as src:
         data = src.read(1)  # Read the first band
         no_data_value = src.nodata  # Get the no-data value from the GeoTIFF
-        epsg_code = src.crs.to_epsg() if src.crs else None
-        origprofile = src.profile
-        width = src.width 
-        height = src.height
-        srcmask = src.read_masks(1)
+        # epsg_code = src.crs.to_epsg() if src.crs else None
+        orig_profile = src.profile
+        # width = src.width
+        # height = src.height
+        # srcmask = src.read_masks(1)
     
     # Clip data values to the specified range
     clipped_data = np.clip(data, data_min_max[0], data_min_max[1])
@@ -192,9 +250,11 @@ Input Parameters:
        
     # calculate the hillshade for  all combination fo azimuths and altitudes
     num_hillshades = len(hs_azimuths) * len(hs_altitudes)
-    # it it expensive to generate all of these hillshades and do the pca on them => we limit the number to something reasonable # 8 azimuths at 3 angles will produce 24 hillshades. ### what is reasonable here?
-    max_num_hs = 24
-    assert num_hillshades <= max_num_hs, f"Only {max_num_hs} azimuth-altitude combinations can be used to calculate a Hillshade PCA but {num_hillshades} were provided"
+
+    # it is expensive to generate all of these hillshades and do the pca on them => we limit the number to something reasonable # 8 azimuths at 3 angles will produce 24 hillshades. ### what is reasonable here?
+    # max_num_hs = 24
+    max_num_hs - kwargs.get('max_num_hs', 24)
+    assert num_hillshades < max_num_hs, f"Only {max_num_hs} azimuth-altitude combinations can be used to calculate a Hillshade PCA but {num_hillshades} were provided"
 
     hillshades = {}
     for az_ind, my_azimuth in enumerate(hs_azimuths):
@@ -217,12 +277,13 @@ Input Parameters:
                                                                             ncols=min([len(hs_azimuths), len(hs_altitudes)]),
                                                                             cmap=cmap)
 
-    write_raster_dict_data_to_geotiff(single_band_tiff_path, origprofile, hillshades)
+    hillshade_file_paths = write_raster_dict_data_to_geotiff(single_band_tiff_path, orig_profile, hillshades)
 
     if not process_pca:
-        return hillshades
+        return hillshades, hillshade_file_paths,
     elif process_pca:
         assert num_hillshades >= 4, f'Need at least 4 azimuth-altitude combinations, only {num_hillshades} were provided'
         pcaComponents = MakeHillShadePCA(hillshades, plot_figures, raster_data=nan_clipped_data, cmap=cmap)
-        write_raster_dict_data_to_geotiff(single_band_tiff_path, origprofile, pcaComponents, len_hs=len(hillshades.keys()))
-        return hillshades, pcaComponents
+        pca_file_paths = write_raster_dict_data_to_geotiff(single_band_tiff_path, orig_profile, pcaComponents, len_hs=len(hillshades.keys()))
+        hillshade_file_paths.update(pca_file_paths)
+        return hillshades, pcaComponents, hillshade_file_paths
