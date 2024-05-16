@@ -220,11 +220,11 @@ Input Parameters:
     abs_min_max = [np.nanmin(no_dum_data), np.nanmax(no_dum_data)]
 
     if plot_histograms:
-        norm_no_dum_data = (no_dum_data.copy() - abs_min_max[0]) / (abs_min_max[1] - abs_min_max[0]) # shift to zero, then normalize by the range
+        norm_no_dum_data = (no_dum_data.copy() - abs_min_max[0]) / (abs_min_max[1] - abs_min_max[0])  # shift to zero, then normalize by the range
         
         fig, ax = plt.subplots(nrows=1, ncols=1, sharey=True, figsize=[12, 3])
 
-        ax.hist(no_dum_data, bins=min(abs_min_max[1]-abs_min_max[0], 100))
+        ax.hist(no_dum_data, bins=int(min(abs_min_max[1]-abs_min_max[0], 100)))
         ylimits = ax.get_ylim()
         ax.plot([abs_min_max[0], abs_min_max[0]], [0, ylimits[1]], c='k', ls=":", lw=1, label=abs_min_max[0])
         for ii, db in enumerate(data_breaks):
@@ -314,7 +314,8 @@ def make_rgba_tiff_from_single_Band(single_band_tiff_path,
                                     generate_rgba_luts=False,
                                     generate_data_uint8_lut=False,
                                     generate_uint8_luts=False,
-                                    plot_rgba_raster=False):
+                                    plot_rgba_raster=False,
+                                    plot_histograms=False):
     """Function to take a single band geotiff file, apply a colormap to the data, and write a rgba geotiff to file
 
 Input parameters:
@@ -399,7 +400,8 @@ Input parameters:
                                         no_data_value=no_data_value,
                                         color_list=EMerald_custom_colors_hexcolorcodes,
                                         cmap_method=cmap_method,
-                                        plot_histograms=True)
+                                        plot_histograms=plot_histograms,
+                                        )
 
     # 2. Generate a custom colormap (EMeraldCustomColormap):
     if color_palette_name is None:

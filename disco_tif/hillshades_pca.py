@@ -61,8 +61,7 @@ altitudes : list of altitude angles
     azimuths = sorted(azimuths)
     print(f"azimuths = {azimuths}")
     
-    altitudes = np.linspace(start_al, (al_inc*(num_al_angles-1))+start_al, num_al_angles)
-    altitudes = altitudes[:-1].astype(int).tolist()
+    altitudes = np.linspace(start_al, (al_inc*(num_al_angles-1))+start_al, num_al_angles).astype(int).tolist()
     print(f"altitudes = {altitudes}")
     return azimuths, altitudes
 
@@ -253,7 +252,7 @@ hillshades, pcaComponents, hillshade_file_paths
 
     # it is expensive to generate all of these hillshades and do the pca on them => we limit the number to something reasonable # 8 azimuths at 3 angles will produce 24 hillshades. ### what is reasonable here?
     # max_num_hs = 24
-    max_num_hs - kwargs.get('max_num_hs', 24)
+    max_num_hs = kwargs.get('max_num_hs', 24)
     assert num_hillshades < max_num_hs, f"Only {max_num_hs} azimuth-altitude combinations can be used to calculate a Hillshade PCA but {num_hillshades} were provided"
 
     hillshades = {}
@@ -279,11 +278,11 @@ hillshades, pcaComponents, hillshade_file_paths
 
     hillshade_file_paths = write_raster_dict_data_to_geotiff(single_band_tiff_path, orig_profile, hillshades)
 
-    if not process_pca:
-        return hillshades, hillshade_file_paths,
-    elif process_pca:
+    if process_pca:
         assert num_hillshades >= 4, f'Need at least 4 azimuth-altitude combinations, only {num_hillshades} were provided'
         pcaComponents = MakeHillShadePCA(hillshades, plot_figures, raster_data=nan_clipped_data, cmap=cmap)
         pca_file_paths = write_raster_dict_data_to_geotiff(single_band_tiff_path, orig_profile, pcaComponents, len_hs=len(hillshades.keys()))
+        hillshades.update(pcaComponents)
         hillshade_file_paths.update(pca_file_paths)
-        return hillshades, pcaComponents, hillshade_file_paths
+
+    return hillshades, hillshade_file_paths
