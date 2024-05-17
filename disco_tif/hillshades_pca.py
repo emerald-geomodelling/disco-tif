@@ -65,7 +65,7 @@ altitudes : list of altitude angles
     print(f"altitudes = {altitudes}")
     return azimuths, altitudes
 
-def write_raster_dict_data_to_geotiff(single_band_tiff_path, orig_profile, raster_data_dict, len_hs=None):
+def write_raster_dict_data_to_geotiff(single_band_tiff_path, orig_profile, raster_data_dict, num_hs=None):
     """Take a dictionary of hillshade or PCA component rasters and writes them disk.
 
 Parameters
@@ -79,7 +79,7 @@ orig_profile : dict
 raster_data_dict : dict
     Dictionary containing hillshade rasters where the key is the name of the hillshade and the value is the hillshade
     
-len_hs : int (default = None)
+num_hs : int (default = None)
     Only valid for a raster_data_dict that contains PCA rasters. The number of hillshades that went into making the PCA components
 
 Returns
@@ -90,14 +90,24 @@ new_geotiff_paths : dict
     new_geotiff_paths = {}
     for key, value in raster_data_dict.items():
         if 'component' in key:
-            assert len_hs is not None, "'len_hs' cannot be none if passing in a pca_dictionary_object"
-            new_tiff_path = f"{single_band_tiff_path.split('.tif')[0]}_hillshade_pca{len_hs}-{key}.tif"
+            assert num_hs is not None, "'num_hs' cannot be none if passing in a pca_dictionary_object"
+            new_tiff_path = f"{single_band_tiff_path.split('.tif')[0]}_hillshade_pca{num_hs}-{key}.tif"
         else:
             new_tiff_path = f"{single_band_tiff_path.split('.tif')[0]}_hillshade_{key}.tif"
-        
+
+        value = ((value.copy() - np.nanmin(value)) / (np.nanmax(value) - np.nanmin(value)))  # scale 0 to 1
+
         new_profile = orig_profile.copy()
-        new_profile.update(dtype=str((value[0, 0]).dtype), nodata=np.nan)
-           
+
+        if np.sum(np.isnan(value)) == 0:
+            value = (value * 255).round().astype('uint8')
+            new_profile.update(dtype='uint8')
+        else:
+            value = (value * 254) + 1
+            value[np.isnan(value)] = 0
+            value = value.round().astype('uint8')
+            new_profile.update(dtype='uint8', nodata=0)
+
         with rasterio.open(new_tiff_path, 'w', **new_profile) as dst:
             dst.write(arr=value, indexes=1, masked=True)
     
@@ -156,7 +166,7 @@ pcaComponents : dict
     
     pcaout = pca.fit(flat_hillshades).transform(flat_hillshades)
 
-    data = hillshades[list(hillshades.keys())[0]] # grab the first entry to get the shape of the raster
+    data = hillshades[list(hillshades.keys())[0]]  # grab the first entry to get the shape of the raster
     
     nrow = data.shape[0]
     ncol = data.shape[1]
@@ -203,7 +213,7 @@ hs_altitudes : list
     List of altitude angles to generate hillshades with
     
 cmap : mpl-like colormap (default = 'terrain')
-        Matplotlib-like color map. Either a colormap can be passed or a named mpl colormap can be passed.
+    Matplotlib-like color map. Either a colormap can be passed or a named mpl colormap can be passed.
 
 process_pca : bool (default = False)
     Switch to generate PCA components
@@ -213,8 +223,9 @@ plot_figures : bool (default = False)
 
 Returns
 -------
-hillshades, hillshade_file_paths,
-hillshades, pcaComponents, hillshade_file_paths
+hillshades : dict
+
+hillshade_file_paths : dict
 
     """
     assert len(data_min_max) == 2, 'len(data_min_max) must be 2'
@@ -228,44 +239,34 @@ hillshades, pcaComponents, hillshade_file_paths
         # width = src.width
         # height = src.height
         # srcmask = src.read_masks(1)
-    
-    # Clip data values to the specified range
-    clipped_data = np.clip(data, data_min_max[0], data_min_max[1])
-    
+
     nan_data = data.copy().astype(float)
-    nan_clipped_data = clipped_data.copy().astype(float)
-    
     if no_data_value is not None:
         nan_data[data == no_data_value] = np.nan
-        nan_clipped_data[data == no_data_value] = np.nan
 
-    #
-    if plot_figures:
-        # Plot the data
-        disco_tif.geotiff_plotting.plot_singleband_raster(raster_data=nan_clipped_data,
-                                                          cmap=cmap,
-                                                          title=f"{single_band_tiff_path} Without Hillshade",
-                                                          ax=None)
-       
-    # calculate the hillshade for  all combination fo azimuths and altitudes
     num_hillshades = len(hs_azimuths) * len(hs_altitudes)
 
-    # it is expensive to generate all of these hillshades and do the pca on them => we limit the number to something reasonable # 8 azimuths at 3 angles will produce 24 hillshades. ### what is reasonable here?
-    # max_num_hs = 24
     max_num_hs = kwargs.get('max_num_hs', 24)
     assert num_hillshades < max_num_hs, f"Only {max_num_hs} azimuth-altitude combinations can be used to calculate a Hillshade PCA but {num_hillshades} were provided"
 
     hillshades = {}
     for az_ind, my_azimuth in enumerate(hs_azimuths):
         for al_ind, my_altitude in enumerate(hs_altitudes):
-            # Create and plot the hillshade with earthpy
             txt_my_azimuth = f"00{my_azimuth}"[-3:]
             txt_my_altitude = f"0{my_altitude}"[-2:]
             hskey = f'az{txt_my_azimuth}_al{txt_my_altitude}'
             hillshades[hskey] = es.hillshade(nan_data, azimuth=my_azimuth, altitude=my_altitude)
 
+    nan_clipped_data = None  # start with None and modify if plotting results to screen
     if plot_figures:
-        # plot the hillshades 
+        nan_clipped_data = np.clip(data.copy(), data_min_max[0], data_min_max[1]).astype(float)
+        if no_data_value is not None:
+            nan_clipped_data[data == no_data_value] = np.nan
+
+        disco_tif.geotiff_plotting.plot_singleband_raster(raster_data=nan_clipped_data,
+                                                          cmap=cmap,
+                                                          title=f"{single_band_tiff_path} Without Hillshade",
+                                                          ax=None)
         disco_tif.geotiff_plotting.plot_greyband_only(raster_data_dict=hillshades,
                                                       nrows=max([len(hs_azimuths), len(hs_altitudes)]),
                                                       ncols=min([len(hs_azimuths), len(hs_altitudes)]))
@@ -281,7 +282,7 @@ hillshades, pcaComponents, hillshade_file_paths
     if process_pca:
         assert num_hillshades >= 4, f'Need at least 4 azimuth-altitude combinations, only {num_hillshades} were provided'
         pcaComponents = MakeHillShadePCA(hillshades, plot_figures, raster_data=nan_clipped_data, cmap=cmap)
-        pca_file_paths = write_raster_dict_data_to_geotiff(single_band_tiff_path, orig_profile, pcaComponents, len_hs=len(hillshades.keys()))
+        pca_file_paths = write_raster_dict_data_to_geotiff(single_band_tiff_path, orig_profile, pcaComponents, num_hs=len(hillshades.keys()))
         hillshades.update(pcaComponents)
         hillshade_file_paths.update(pca_file_paths)
 
