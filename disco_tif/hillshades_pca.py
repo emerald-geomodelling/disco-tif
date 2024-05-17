@@ -21,28 +21,30 @@ def build_hs_az_al( start_az=45, num_az_angles=4, start_al=30, al_inc=30, num_al
     
 Parameters
 ----------
-start_az : int or float (default = 45)
-    Starting azimuth angle. Valid angles are between 0 and 360
+    start_az : int or float (default = 45)
+        Starting azimuth angle. Valid angles are between 0 and 360
 
-num_az_angles : int (default = 4)
-    Number of azimuths to generate. Must be greater than 1.
+    num_az_angles : int (default = 4)
+        Number of azimuths to generate. Must be greater than 1.
 
-start_al : int or float (default = 30°)
-    Starting altitude angle. Valid angles are between 0 and 90
+    start_al : int or float (default = 30°)
+        Starting altitude angle. Valid angles are between 0 and 90
 
-al_inc : int or float (default = 30°)
-    Altitude increment. First altitude angle will be 'start_al'.
-    Second altitude angle will be start_al + al_inc, etc.
-    
-num_al_angles : int (default = 2)
-    Number of altitude angles to generate. Must be greater than 1.
-    start_al + (al_inc * (num_al_angles - 1)) <= 90
-    
+    al_inc : int or float (default = 30°)
+        Altitude increment. First altitude angle will be 'start_al'.
+        Second altitude angle will be start_al + al_inc, etc.
+
+    num_al_angles : int (default = 2)
+        Number of altitude angles to generate. Must be greater than 1.
+        start_al + (al_inc * (num_al_angles - 1)) <= 90
+
 Returns
 -------
-azimuths : list of azimuth angles
-    
-altitudes : list of altitude angles
+    azimuths : list
+        List of azimuth angles
+
+    altitudes : list
+        List of altitude angles
     """
     assert start_az >= 0, 'starting azimuth must be greater than or equal to 0°'
     assert start_az <= 360, 'starting azimuth must be less than or equal to 360°'
@@ -70,22 +72,22 @@ def write_raster_dict_data_to_geotiff(single_band_tiff_path, orig_profile, raste
 
 Parameters
 ----------
-single_band_tiff_path : str
-    Path to the original, single-band, geotiff
-    
-orig_profile : dict
-    The original profile from the original single band geotiff
-    
-raster_data_dict : dict
-    Dictionary containing hillshade rasters where the key is the name of the hillshade and the value is the hillshade
-    
-num_hs : int (default = None)
-    Only valid for a raster_data_dict that contains PCA rasters. The number of hillshades that went into making the PCA components
+    single_band_tiff_path : str
+        Path to the original, single-band, geotiff
+
+    orig_profile : dict
+        The original profile from the original single band geotiff
+
+    raster_data_dict : dict
+        Dictionary containing hillshade rasters where the key is the name of the hillshade and the value is the hillshade
+
+    num_hs : int (default = None)
+        Only valid for a raster_data_dict that contains PCA rasters. The number of hillshades that went into making the PCA components
 
 Returns
 -------
-new_geotiff_paths : dict
-    Dictionary of paths to the new geotiffs
+    new_geotiff_paths : dict
+        Dictionary of paths to the new geotiffs
     """
     new_geotiff_paths = {}
     for key, value in raster_data_dict.items():
@@ -117,29 +119,31 @@ new_geotiff_paths : dict
         
 
 def MakeHillShadePCA(hillshades, plot_figures=False, raster_data=None, cmap='terrain', n_components=3):
-    """description
+    """ Function to find the principal components of a bunch of hillshades.
+This will help highlight and illuminate features in the dtm.
+
 Parameters
 ----------
-hillshades : dict
-    Dictionary of hillshades, where the key contains azimuth and altitude pairs, and the value is the hillshade raster
+    hillshades : dict
+        Dictionary of hillshades, where the key contains azimuth and altitude pairs, and the value is the hillshade raster
 
-plot_figures : bool (default = False)
-    Switch to plot the newly generated PCA components to screen
+    plot_figures : bool (default = False)
+        Switch to plot the newly generated PCA components to screen
 
-raster_data : 2D numpy array (default=None)
-    Used only if plot_figures = True
-    Used for plotting the new PCA components as an overlay on the original data.
+    raster_data : 2D numpy array (default = None)
+        Used only if plot_figures = True
+        Used for plotting the new PCA components as an overlay on the original data.
 
-cmap : mpl-like colormap (default = 'terrain')
-    Matplotlib-like color map. Either a colormap can be passed or a named mpl colormap can be passed.
-    
-n_components : int (default = 3)
-    The number of PCA components to generate. This number must be less than the number of hillshades
+    cmap : mpl-like colormap (default = 'terrain')
+        Matplotlib-like color map. Either a colormap can be passed or a named mpl colormap can be passed.
+
+    n_components : int (default = 3)
+        The number of PCA components to generate. This number must be less than the number of hillshades
 
 Returns
 -------
-pcaComponents : dict
-    Dictionary of PCA components
+    pcaComponents : dict
+        Dictionary of PCA components, where the keys are the names of the rasters and the values are the components of the rasters.
     """
     assert n_components < len(hillshades), 'The number of PCA components must be less than the number of hillshades being evaluated.'
     if plot_figures:
@@ -195,37 +199,37 @@ pcaComponents : dict
     
 
 def build_hillshade(single_band_tiff_path, data_min_max, hs_azimuths, hs_altitudes, cmap='terrain', process_pca=False, plot_figures=False, **kwargs):
-    """description
+    """Function to generate hillshades and, if asked for, principal components of the hillshades.
 
 Parameters
 ----------
-single_band_tiff_path : str
-    Path to the original single-band-tiff
-    
-data_min_max : list or tuple
-    Must be of length 2
-    Minimum and maximum values to clipe the raster values to.
-    
-hs_azimuths : list
-    List of azimuths to generate hillshades with
-    
-hs_altitudes : list
-    List of altitude angles to generate hillshades with
-    
-cmap : mpl-like colormap (default = 'terrain')
-    Matplotlib-like color map. Either a colormap can be passed or a named mpl colormap can be passed.
+    single_band_tiff_path : str
+        Path to the original single-band-tiff
 
-process_pca : bool (default = False)
-    Switch to generate PCA components
-    
-plot_figures : bool (default = False)
-    Switch to plot figures to screen
+    data_min_max : list or tuple
+        Must be of length 2
+        Minimum and maximum values to clip the raster values to.
+
+    hs_azimuths : list
+        List of azimuths to generate hillshades with
+
+    hs_altitudes : list
+        List of altitude angles to generate hillshades with
+
+    cmap : mpl-like colormap (default = 'terrain')
+        Matplotlib-like color map. Either a colormap can be passed or a named mpl colormap can be passed.
+
+    process_pca : bool (default = False)
+        Switch to generate PCA components
+
+    plot_figures : bool (default = False)
+        Switch to plot figures to screen
 
 Returns
 -------
-hillshades : dict
+    hillshades : dict
 
-hillshade_file_paths : dict
+    hillshade_file_paths : dict
 
     """
     assert len(data_min_max) == 2, 'len(data_min_max) must be 2'
