@@ -15,15 +15,15 @@ from matplotlib import pyplot as plt
 def plot_singleband_raster(raster_data, cmap="terrain", title='Raster Data', ax=None, figsize=[15, 9]):
     """description
 Input Parameters:
-    - raster_data:
+    raster_data:
     
-    - cmap="terrain":
+    cmap="terrain":
     
-    - title='Raster Data':
+    title='Raster Data':
     
-    - ax=None:
+    ax=None:
     
-    - figsize = [15, 9]
+    figsize = [15, 9]
     """
     # Plot the data
     if ax is None:
@@ -42,13 +42,13 @@ Input Parameters:
 def plot_greyband_only(raster_data_dict, nrows, ncols, plotsize=4):
     """description
 Input Parameters:
-    - raster_data_dict:
+    raster_data_dict:
 
-    - nrows:
+    nrows:
 
-    - ncols:
+    ncols:
 
-    - plotsize=4
+    plotsize=4
     """
     fig, axs = plt.subplots(nrows=nrows, ncols=ncols, figsize=[ncols*plotsize, nrows*plotsize])
     try:
@@ -73,17 +73,17 @@ Input Parameters:
 def plot_color_raster_with_greyscale_overlay(raster_data, raster_data_dict, nrows, ncols, plotsize=4, cmap='terrain'):
     """description
 Input Parameters:
-    - raster_data:
+    raster_data:
     
-    - raster_data_dict:
+    raster_data_dict:
     
-    - nrows:
+    nrows:
     
-    - ncols:
+    ncols:
     
-    - plotsize=4:
+    plotsize=4:
     
-    - cmap='terrain'
+    cmap='terrain'
     """
     fig, axs = plt.subplots(nrows=nrows, ncols=ncols, figsize=[ncols*plotsize, nrows*plotsize])
     try:
