@@ -135,9 +135,9 @@ pcaComponents : dict
     if plot_figures:
         assert raster_data is not None, "raster data must be supplied if plot_figures is true"
         
-    NoNanIndicies = np.argwhere(~np.isnan(hillshades[list(hillshades.keys())[0]].flatten())).flatten()
+    no_nan_indicies = np.argwhere(~np.isnan(hillshades[list(hillshades.keys())[0]].flatten())).flatten()
 
-    n_samples = len(NoNanIndicies)
+    n_samples = len(no_nan_indicies)
     n_features = len(hillshades.keys())
     assert n_features >= 4, "There must be at least 4 hillshades to produce a PCA"
     
@@ -147,7 +147,7 @@ pcaComponents : dict
     for key, value in hillshades.items():
         feature_ind += 1
         value = value.flatten()
-        value = value[NoNanIndicies]
+        value = value[no_nan_indicies]
         flat_hillshades[:, feature_ind] = value
     
     assert np.isnan(flat_hillshades).sum() == 0, "There can be no NaN's when performing a pca"
@@ -167,7 +167,7 @@ pcaComponents : dict
     for ilay in range(0, len(pcaout[0])):
         tdat = dumarray.copy()
         nowdat = pcaout[:, ilay]
-        tdat[NoNanIndicies] = nowdat
+        tdat[no_nan_indicies] = nowdat
         pcaComponents[f'component_{ilay+1}'] = tdat.reshape([nrow, ncol], order='C')
     
     if plot_figures:
