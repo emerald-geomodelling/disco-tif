@@ -65,18 +65,29 @@ colormap_length = 256
 
 
 def build_custom_colormap(breaks_by_percentages, custom_color_hex, new_cmap_name="Custom_Colormap"):
-    """ Function to take a sorted array of percentage-break-points (i.e. breaks_by_percentages) and applies it to the color-list (i.e. custom_color_hex) colormap. The length of the breaks_by_percentages array should be the same length as custom_color_hex (length=8 for EMerald_custom_colors_hexcolorcodes) and range from 0 to 1
+    """ Function to take a sorted array of percentage-break-points (i.e. breaks_by_percentages) and applies it to the
+    color-list (i.e. custom_color_hex) colormap. The length of the breaks_by_percentages array should be the same length
+    as custom_color_hex (length=8 for EMerald_custom_colors_hexcolorcodes) and range from 0 to 1
 
 Parameters
 ----------
-    breaks_by_percentages: List of breakpoints in decimal-percentages of data. [0.0, 0.3, 0.6, 0.9, 1.0]
-        note - if starting and ending points are not at 0 and 1, respectively, the program will prepend and append the list with 0 and 1.
-            The program will also copy the first and last colors in custom_color_hex to the new low and high percentages appended
+    breaks_by_percentages : list
+        List of breakpoints in decimal-percentages of data.
+        i.e. [0.0, 0.3, 0.6, 0.9, 1.0]
+        Note - if starting and ending points are not at 0 and 1, respectively, the program will prepend and append the
+        list with 0 and 1. The program will also copy the first and last colors in custom_color_hex to the new low and
+        high percentages appended
 
-    custom_color_hex: List of color hex codes to generate the colormap from. i.e. ['#000000', '#aaaaaa', '#dddddd', '#eeeeee', '#ffffff']
+    custom_color_hex : list
+        List of color hex codes to generate the colormap from.
+        i.e. ['#000000', '#aaaaaa', '#dddddd', '#eeeeee', '#ffffff']
 
-    new_cmap_name: String name to use for the generation of the new cmap.
-        defualt: "Custom_Colormap"
+    new_cmap_name : str (defualt = "Custom_Colormap")
+        String name to use for the generation of the new cmap.
+
+Returns
+-------
+    CustomColormap : mpl colormap object
     """
     breaks_by_percentages = copy.deepcopy(breaks_by_percentages)
     custom_color_hex = copy.deepcopy(custom_color_hex)
@@ -86,7 +97,8 @@ Parameters
     else:
         pass
 
-    assert len(breaks_by_percentages) == len(custom_color_hex), "The length of the breaks_by_percentages list but be the same as the length of custom_color_hex"
+    assert len(breaks_by_percentages) == len(custom_color_hex), "The length of the breaks_by_percentages list but be the" \
+                                                                "same as the length of custom_color_hex"
 
     if breaks_by_percentages[0] != 0:
         breaks_by_percentages.insert(0, 0)
@@ -134,24 +146,35 @@ def make_percentile_array(data_min_max,
                           color_list=None,
                           plot_histograms=False):
     """Function to build a data driven percentile array based on the cmap method specified.
+
 Parameters
 ----------
-    data_min_max: list containing the minimum and maximum values to display. values outside this range will be saturated to the end members.
+    data_min_max : list
+        List containing the minimum and maximum values to display. values outside this range will be saturated to the
+        end members.
         ex: [min, max]
 
-    data: 2D array of cell values of the raster.
+    data : 2D numpy array
+        Cell values of the raster.
         ex: ([[x1y1, ..., xny1], [x1y2, ..., xny2], ..., [x1yn, ..., xnyn]])
 
-    no_data_value: Value that specifies the no_data_value
+    no_data_value : float, int, or None
+        Value that specifies the no_data_value
     
-    cmap_method: parameter to tell the program how to bin the data. Options are 'pseudo_hist_norm', or 'pseudo_linear'
-        Default:  'pseudo_hist_norm'
+    cmap_method : str (default = 'pseudo_hist_norm')
+        parameter to tell the program how to bin the data.
+        Options are 'pseudo_hist_norm' or 'pseudo_linear'
 
-    color_list: list of colors, global variable
-        Default: EMerald_custom_colors_hexcolorcodes
+    color_list : list (default = EMerald_custom_colors_hexcolorcodes)
+        List of colors, global variable
     
-    plot_histograms: boolean parameter for plotting the percentage break points on top of a histogram of the data
-        Default:  False
+    plot_histograms : bool (default = False)
+        Parameter for plotting the percentage break points on top of a histogram of the data
+
+Returns
+-------
+    data_breaks : list
+        List of breakpoint in terms of original input data values
     """
     if color_list is None:
         color_list = copy.deepcopy(EMerald_custom_colors_hexcolorcodes)
@@ -161,7 +184,8 @@ Parameters
     if data_min_max is not None:
         assert len(data_min_max) == 2, 'len of data_min_max must be 2'
         assert data_min_max[0] < data_min_max[1], 'first value must be less than second value'
-        assert data_min_max[1] > 0, 'This should really be a bigger number, but at least this will save dividing by a zero...'
+        assert data_min_max[1] > 0, 'This should really be a bigger number, but at least this will save dividing by a' \
+                                    'zero...'
 
     color_list = color_list.copy()
 
@@ -222,7 +246,7 @@ Parameters
     abs_min_max = [np.nanmin(no_dum_data), np.nanmax(no_dum_data)]
 
     if plot_histograms:
-        norm_no_dum_data = (no_dum_data.copy() - abs_min_max[0]) / (abs_min_max[1] - abs_min_max[0])  # shift to zero, then normalize by the range
+        # norm_no_dum_data = (no_dum_data.copy() - abs_min_max[0]) / (abs_min_max[1] - abs_min_max[0])  # shift to zero, then normalize by the range
         
         fig, ax = plt.subplots(nrows=1, ncols=1, sharey=True, figsize=[12, 3])
 
@@ -247,18 +271,28 @@ Parameters
 
 def calc_data_min_max(data, no_data_value, clip_perc=None, min_max_method='data_absolute'):
     """Function to calculate the min max values of the data
+
 Parameters
 ----------
-    data: 2D array of cell values of the raster.
+    data : 2D numpy array
+        Cell values of the raster.
         ex: ([[x1y1, ..., xny1], [x1y2, ..., xny2], ..., [x1yn, ..., xnyn]])
 
-    no_data_value: value the defines the no-data-value
+    no_data_value : float, int, or None
+        Value the defines the no-data-value
     
-    clip_perc: list of percentile (quartile) values to clip the data to. i.e. [1, 99] for clip to the fist and 99th percentiles of the data (essentially, exclude erroneous high or low points). This is only relevant if the min_max_method is 'percentile'.
-        Default: None
-        
-    min_max_method: defines how to define the min_max method. Options are: 'data_absolute', or 'percentile'
-        Default:  'data_absolute'
+    clip_perc : list (default = None)
+        List of percentile (quartile) values to clip the data to. i.e. [1, 99] for clip to the fist and 99th percentiles
+        of the data (essentially, exclude erroneous high or low points). This is only relevant if the min_max_method is
+        'percentile'.
+
+    min_max_method: str (default = 'data_absolute')
+        Defines how to define the min_max method. Options are: 'data_absolute', or 'percentile'
+
+Returns
+-------
+    data_min_max : list
+        2 element list for min and max values to use for the data
     """
     if min_max_method == 'data_absolute':
         # using absolute min max from data
@@ -282,8 +316,25 @@ Parameters
 
 
 def rast_dat_to_uint8_data(rast_dat, data_min_max, no_data_value):
-    """Function to map raster data to uint8 data. no-data values are mapped to 0 if they exist and then data would be mapped 1-255. If no_data is none then the data will be mapped 0-255
+    """Function to map raster data to uint8 data. No-data values are mapped to 0 if they exist and then data would be
+    mapped 1-255. If no_data is none then the data will be mapped 0-255
 
+Parameter
+---------
+    rast_dat : 2D numpy array
+        Cell values of the raster.
+        ex: ([[x1y1, ..., xny1], [x1y2, ..., xny2], ..., [x1yn, ..., xnyn]])
+
+    data_min_max : list
+        2 element list for min and max values to use for the data
+
+    no_data_value : float, int, or None
+        Value the defines the no-data-value
+
+Returns
+-------
+    uint8_rast_dat_with_dumb : 2D numpy array
+        Raster data in uint8 format
     """
     rast_dat_with_nan = rast_dat.copy().astype(float)
     
@@ -323,58 +374,72 @@ def make_rgba_tiff_from_single_Band(single_band_tiff_path,
 
 Parameters
 ----------
-    single_band_tiff_path:
+    single_band_tiff_path : str
         complete path to single-band-geotiff
 
-    data_min_max:
-        Default: None
-        Can take a list of lenth: 2, ex: [0, 500]
-        if not specified, this function will automatically calculate min/max values based on the min_max_method.
+    data_min_max : list, or None (default = None)
+        List of length 2. i.e. [0, 500]
+        If not specified, this function will automatically calculate min/max values based on the min_max_method.
  
-    min_max_method:
-        Default: 'percentile'; only relevant if data_min_max==None.
-        Also accepts 'data_absolute'.
-        'percentile' uses the percentiles supplied in clip_perc.
-        'data_absolute' uses the minimum and maximum values of the data supplied to the function
+    min_max_method : str (default = 'percentile')
+        Keyword to define the method to use to calculate the min and max values of the new colormap
+        Only relevant if data_min_max==None.
+        Available keywords:
+            'percentile' uses the percentiles supplied in clip_perc.
+            'data_absolute' uses the minimum and maximum values of the data supplied to the function
  
-    clip_perc
-        Default: [1, 99]; only relevant if data_min_max==None.
+    clip_perc : list (default = [1, 99])
         Percentile values to clip the data values to if no data_min_max is specified.
+        Only relevant if data_min_max==None.
  
-    color_palette_name
-        Default: None
-        Desired color pallet based on matplotlib colormaps.
+    color_palette_name : str or None  (default = None)
+        Named mpl colormap; Desired color pallet based on matplotlib colormaps.
         https://matplotlib.org/stable/users/explain/colors/colormaps.html
         If None, the function will automatically create a new "EMerald_Custom_Colormap"
  
-    cmap_method: Method to determine where the color breaks should be. Also accepts 'pseudo_linear'
-        Default: 'pseudo_hist_norm'
-        'pseudo_hist_norm' will produce a linear colormap for data values below 0 and a histogram normalized colormap for the positive values
-        'pseudo_linear' will produce a linear colormap for data values below 0 and a separate linear colormap for the positive values.
+    cmap_method : str (default ='pseudo_hist_norm')
+        Method to determine where the color breaks should be. Also accepts 'pseudo_linear'
+        Available keywords:
+            'pseudo_hist_norm' will produce a linear colormap for data values below 0 and a histogram normalized
+                colormap for the positive values
+            'pseudo_linear' will produce a linear colormap for data values below 0 and a separate linear colormap for
+                the positive values.
 
-    output_tif: Write colorized geotiffs to file.
-        Default: 'single_band_rgba'
-        Options include:
-            'single_band_rgba', 'multi_band_rgba', None
+    output_tif : str or None (default = 'single_band_rgba')
+        Option to write colorized geotiffs to file as either a single-band, uint8 file, or a 4-band, uint8 file, or do
+        not write to file.
+        Available keywords:
+            'single_band_rgba'
+            'multi_band_rgba'
+            None
 
-    generate_lookup_tables:
-        Default = False
-        If set to True look up tables will be generated and written to file. This includes a look up table that can be applied to the single-band geotiff in QGIS and maybe other GIS software.
+    generate_QGIS_lut : bool (default = True)
+        Option to write a GIS software compatible colorization file to disk
 
-    generate_QGIS_lut: Option to write a GIS software compatible colorization file to disk
-        Default: True
+    generate_rgba_luts : bool (default = False)
+        Option to write data values to rgba look-up-tables to disk.
 
-    generate_rgba_luts: Option to write data values to rgba look-up-tables to disk.
-        Default: False
+    generate_data_uint8_lut : bool (default = False)
+        Option to write look-up-table to covert data to uint8 values.
 
-    generate_data_uint8_lut: Option to write look-up-table to covert data to uint8 values.
-        Default: False
+    generate_uint8_luts : bool (default = False)
+        Option to write uint8-data values to rgba look-up-tables to disk.
 
-    generate_uint8_luts: Option to write uint8-data values to rgba look-up-tables to disk.
-        Default: False
+    plot_rgba_raster : bool (default = False)
+        Option to plot raster to screen. If set to True this will generate new matplotlib figures.
 
-    plot_rgba_raster: option to plot raster to screen. If set to True this will generate new matplotlib figures.
-        Default: False
+    plot_histograms : bool (default = False)
+        Option to plot a histogram of the data and breakpoints.
+
+Returns
+-------
+    EMeraldCustomColormap : mpl-like colormap object
+
+    data_breaks : list
+        List of breakpoints in terms of data-values
+
+    outfilepath : dict
+        Dictionary of filepaths of newly generated geotiffs
     """
 
     if data_min_max is not None:
@@ -389,9 +454,9 @@ Parameters
     with rasterio.open(single_band_tiff_path, 'r') as src:
         data = src.read(1)  # Read the first band
         orig_profile = src.profile
-        extent = src.bounds
-        size = (src.width, src.height)
-        epsg_code = src.crs.to_epsg() if src.crs else None
+        # extent = src.bounds
+        # size = (src.width, src.height)
+        # epsg_code = src.crs.to_epsg() if src.crs else None
         no_data_value = src.nodata  # Get the no-data value from the GeoTIFF
 
     no_data_value = np.array(no_data_value, dtype=data[0, 0].dtype).tolist()
