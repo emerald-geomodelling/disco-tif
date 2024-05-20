@@ -1,29 +1,33 @@
-# import os
-# import rasterio
-# import earthpy as et
-# import earthpy.spatial as es
 import earthpy.plot as ep
-# import matplotlib as mpl
 from matplotlib import pyplot as plt
-# from matplotlib.colors import LinearSegmentedColormap
-# import datetime
-# import numpy as np
-# import pandas as pd
-# import sklearn.decomposition
 
 
-def plot_singleband_raster(raster_data, cmap="terrain", title='Raster Data', ax=None, figsize=[15, 9]):
-    """description
-Input Parameters:
-    raster_data:
+def plot_singleband_raster(raster_data, cmap="terrain", title='Raster Data', ax=None, figsize=(15, 9)):
+    """plotting routine for colorizing a single band raster.
+
+Parameters
+----------
+    raster_data : 2D numpy array
     
-    cmap="terrain":
+    cmap : named mpl colormap (defalut = "terrain")
+        Colormap to apply to the single band data
+
+    title : str (default = 'Raster Data')
+        Title to apply to the figure
     
-    title='Raster Data':
-    
-    ax=None:
-    
-    figsize = [15, 9]
+    ax : mpl figure axes (default = None)
+        If None, a new figure will be created
+
+    figsize : tuple (default = (15, 9))
+        If ax is None the size of the new figure
+
+Returns
+-------
+    fig : figure handle
+        Only if ax is None
+
+    ax : axes handle
+        Only if ax is None
     """
     # Plot the data
     if ax is None:
@@ -40,15 +44,21 @@ Input Parameters:
 
 
 def plot_greyband_only(raster_data_dict, nrows, ncols, plotsize=4):
-    """description
-Input Parameters:
-    raster_data_dict:
+    """Plotting function to plot only the greyband overlays.
 
-    nrows:
+Parameters
+----------
+    raster_data_dict : dict
+        Dictionary of raster data to plot
 
-    ncols:
+    nrows : int
+        number of rows in the figure
 
-    plotsize=4
+    ncols : int
+        number of columns in the figure
+
+    plotsize : int (default = 4)
+        Parameter defining how big each subplot should be - assumes square subplots
     """
     fig, axs = plt.subplots(nrows=nrows, ncols=ncols, figsize=[ncols*plotsize, nrows*plotsize])
     try:
@@ -71,19 +81,26 @@ Input Parameters:
 
 
 def plot_color_raster_with_greyscale_overlay(raster_data, raster_data_dict, nrows, ncols, plotsize=4, cmap='terrain'):
-    """description
-Input Parameters:
-    raster_data:
+    """Plotting function to plot a semi-transparent greyband overlay on top of a colorized raster.
+
+Parameters
+----------
+    raster_data : 2D numpy array
+        Original raster data
+
+    raster_data_dict : dict
+        Dictionary of semi-transparent raster overlays - like a hillshade
     
-    raster_data_dict:
+    nrows : int
+        Number of rows in the figure
     
-    nrows:
-    
-    ncols:
-    
-    plotsize=4:
-    
-    cmap='terrain'
+    ncols : int
+        Number of columns in the figure
+
+    plotsize : int (default=4)
+        Parameter defining how big each subplot should be - assumes square subplots
+
+    cmap : named mpl colormap (default='terrain')
     """
     fig, axs = plt.subplots(nrows=nrows, ncols=ncols, figsize=[ncols*plotsize, nrows*plotsize])
     try:
