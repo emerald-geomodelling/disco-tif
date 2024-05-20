@@ -19,12 +19,21 @@ def stoday():
 
 ######################################
 def cmap_data_break_to_df(cmap, data_breaks):
-    """Function that takes a list of hex color codes and a list of data_breaks and makes a dataframe with rgba from them
+    """Function that takes a list of hex color codes and a list of data_breaks and makes a dataframe with rgba from
+    them.
 
-Input Parameters:
-    cmap: a list of hex color codes
+Parameters
+----------
+    cmap : list
+        A list of hex color codes
     
-    data_breaks: a list of data break relating to the hex colors
+    data_breaks : list
+        A list of data break relating to the hex colors
+
+Returns
+-------
+    colors_rgba : pandas dataframe
+        Dataframe of data-break values and the associated color
     """
     assert len(cmap) == len(data_breaks), f"there's an odd mismatch in length of 'cmap' and 'data_breaks' \n cmap:\n {cmap}\n data_breaks:\n {data_breaks}"
     
@@ -41,12 +50,21 @@ Input Parameters:
 
 
 def short_color_table_to_long_color_table(colors_rgba, no_data_value):
-    """ Function takes a short dataframe of data breaks and colors and linearly expands them to a 256 (or 255 if no_data_value is not None) rows
+    """Function takes a short dataframe of data breaks and colors and linearly expands them to a 256 (or 255 if
+    no_data_value is not None) rows.
 
-Input Parameters:
-    colors_rgba: Dataframe of data values and rgba values
+Parameters
+----------
+    colors_rgba : pandas dataframe
+        Dataframe of data values and rgba values
     
-    no_data_value: value that represents no_data in the dataset
+    no_data_value : int, float, or None
+        Value that represents no_data in the dataset
+
+Returns
+-------
+    colors_rgba :
+        Dataframe of data-break values and the associated color
     """
     data_breaks = colors_rgba.loc[:, 'data_val'].values
 
@@ -75,20 +93,32 @@ Input Parameters:
 
 
 def rast_dat_to_QGIS_lut(cmap, data_breaks, dtype, output_GIS_lut_path, path_to_orig_geotiff=None, short_file=True, print_to_screen=False):
-    """Function to take a set of colors and data breaks and write to a QGIS (possibly other GIS software programs too) compatible color table to apply to a single band geotiff.
+    """Function to take a set of colors and data breaks and write to a QGIS (possibly other GIS software programs too)
+    compatible color table to apply to a single band geotiff.
     
-Input Parameters:
-    - cmap: List of hex color codes. ex: EMerald_custom_colors_hexcolorcodes
+Parameters
+----------
+    cmap : list
+        List of hex color codes. ex: EMerald_custom_colors_hexcolorcodes
     
-    - data_breaks: List of data values to map the cmap too
+    data_breaks : list
+    List of data values to map the cmap too
     
-    - dtype: data_type of raster data - probably 'int', or 'float'
+    dtype : dtype
+        data_type of raster data - probably 'int', or 'float'
     
-    - output_GIS_lut_path: Full path (without extension) to the desired files. Color component and extension will append to the filename.
+    output_GIS_lut_path : str
+        Full path (without extension) to the desired files. Color component and extension will append to the filename.
         ex: f"{output_GIS_lut_path}_qgis_color_table_{stoday()}.txt"
 
-    - short_file: boolean. If False the resulting file will be 256 entries long.
-        Default: True
+    path_to_orig_geotiff : str (default = None)
+        Path the original geotiff.
+
+    short_file : bool (default = True)
+        Boolean. If False the resulting file will be 256 entries long.
+
+    print_to_screen : bool (default = False)
+        Option to print the Lut to screen
     """
     
     colors_rgba = cmap_data_break_to_df(cmap, data_breaks)
@@ -124,22 +154,29 @@ Input Parameters:
 def rast_dat_to_single_channel_rgba_luts(cmap, data_breaks, dtype, no_data_value, lut_outpath_base, short_file=True, print_to_screen=False):
     """Function that maps data values to look up tables for eac color in r, g, b, and a.
     
-Input Parameters:
-    - cmap: List of hex color codes. ex: EMerald_custom_colors_hexcolorcodes
+Parameters
+----------
+    cmap : list
+        List of hex color codes. ex: EMerald_custom_colors_hexcolorcodes
     
-    - data_breaks: List of data values to map the cmap too
+    data_breaks : list
+        List of data values to map the cmap too
     
-    - dtype: data_type of raster data - probably 'int', or 'float'
+    dtype : dtype
+        data_type of raster data - probably 'int', or 'float'
     
-    - no_data_value: Value that specifies the no_data_value. I
+    no_data_value : int, float, or None
+        Value that specifies the no_data_value.
     
-    - lut_outpath_base: Full path (without extionsion) to the desired files. Color component and extention will appended to the filename.
+    lut_outpath_base : str
+        Full path (without extension) to the desired files. Color component and extension will append to the filename.
         ex: red file: lut_outpath_base + '_r.lut
     
-    - short_file: boolean. If False the resulting file will be 256 entries long.
-        Default: True
+    short_file : bool (default = True)
+        If False the resulting file will be 256 entries long.
 
-    See this discussion on how to effectively use LUTs in a mapserver mapfile: https://github.com/emerald-geomodelling/disco-tif/issues/4#issuecomment-2084928873
+    print_to_screen : bool (default = False)
+        Option to print the Lut to screen
     """
     colors_rgba = cmap_data_break_to_df(cmap, data_breaks)
 
@@ -180,22 +217,29 @@ def rast_dat_to_multi_channel_rgba_lut(cmap,
                                        print_to_screen=False):
     """Function that takes raster data and writes a single rgba lut to disk.
     
-Input Parameters:
-    - cmap: List of hex color codes. ex: EMerald_custom_colors_hexcolorcodes
+Parameters
+----------
+    cmap : list
+        List of hex color codes. ex: EMerald_custom_colors_hexcolorcodes
     
-    - data_breaks: List of data values to map the cmap too
+    data_breaks : list
+        List of data values to map the cmap too
     
-    - dtype: data_type of raster data - probably 'int', or 'float'
+    dtype : dtype
+        data_type of raster data - probably 'int', or 'float'
     
-    - no_data_value: Value that specifies the no_data_value
+    no_data_value : int, float, or None
+        Value that specifies the no_data_value
     
-    - lut_outpath_base: Full path (without extension) to the desired files. Color component and extension will append to the filename.
+    lut_outpath_base : str
+        Full path (without extension) to the desired files. Color component and extension will append to the filename.
         ex: red file: lut_outpath_base + '_r.lut
     
-    - short_file: boolean. If False the resulting file will be 256 entries long.
-        Default: True
+    short_file : bool (default = True)
+        If False the resulting file will be 256 entries long.
 
-    See this discussion on how to effectively use LUTs in a mapserver mapfile: https://github.com/emerald-geomodelling/disco-tif/issues/4#issuecomment-2084928873
+    print_to_screen : bool (default = False)
+        Option to print the Lut to screen
     """
     colors_rgba = cmap_data_break_to_df(cmap, data_breaks)
 
@@ -225,22 +269,29 @@ Input Parameters:
 def uint8dat_to_single_channel_rgba_luts(cmap, data_breaks, dtype, no_data_value, lut_outpath_base, short_file=True, print_to_screen=False):
     """Function that writes uint8 data to individual color lut files to disk.
     
-Input Parameters:
-    - cmap: List of hex color codes. ex: EMerald_custom_colors_hexcolorcodes
+Parameters
+----------
+    cmap : list
+        List of hex color codes. ex: EMerald_custom_colors_hexcolorcodes
     
-    - data_breaks: List of data values to map the cmap too
+    data_breaks : list
+        List of data values to map the cmap too
     
-    - dtype: data_type of raster data - probably 'int', or 'float'
+    dtype : dtype
+        data_type of raster data - probably 'int', or 'float'
     
-    - no_data_value: Value that specifies the no_data_value
+    no_data_value : int, float, or None
+        Value that specifies the no_data_value
     
-    - lut_outpath_base: Full path (without extension) to the desired files. Color component and extension will append to the filename.
+    lut_outpath_base : str
+        Full path (without extension) to the desired files. Color component and extension will append to the filename.
         ex: red file: lut_outpath_base + '_r.lut
 
-    - short_file: boolean. If False the resulting file will be 256 entries long.
-        Default: True
+    short_file : bool (default = True)
+        If False the resulting file will be 256 entries long.
 
-    See this discussion on how to effectively use LUTs in a mapserver mapfile: https://github.com/emerald-geomodelling/disco-tif/issues/4#issuecomment-2084928873
+    print_to_screen : bool (default = False)
+        Option to print the Lut to screen
     """
     colors_rgba = cmap_data_break_to_df(cmap, data_breaks)
 
@@ -279,24 +330,32 @@ Input Parameters:
 
 
 def uint8dat_to_multi_channel_rgba_lut(cmap, data_breaks, dtype, no_data_value, lut_outpath_base, short_file=True, print_to_screen=False):
-    """This function will write a look-up-table that maps uint8 data vales to r,g,b,a colors. No-data-values will be mapped to 0, min values will be mapped to 1, max values will be mapped to 255
+    """This function will write a look-up-table that maps uint8 data vales to r,g,b,a colors. No-data-values will be
+    mapped to 0, min values will be mapped to 1, max values will be mapped to 255
     
-Input Parameters:
-    - cmap: List of hex color codes. ex: EMerald_custom_colors_hexcolorcodes
+Parameters
+----------
+    cmap : list
+        List of hex color codes. ex: EMerald_custom_colors_hexcolorcodes
     
-    - data_breaks: List of data values to map the cmap too
+    data_breaks : list
+        List of data values to map the cmap too
     
-    - dtype: data_type of raster data - probably 'int', or 'float'
+    dtype : list
+        Data_type of raster data - probably 'int', or 'float'
     
-    - no_data_value: Value that specifies the no_data_value
+    no_data_value : int, float, or None
+        Value that specifies the no_data_value
     
-    - lut_outpath_base: Full path (without extionsion) to the desired files. Color component and extention will appended to the filename.
+    lut_outpath_base : str
+        Full path (without extension) to the desired files. Color component and extension will append to the filename.
         ex: red file: lut_outpath_base + '_r.lut
     
-    - short_file: boolean. If False the resulting file will be 256 entries long.
-        Default: True
+    short_file : bool (default = True)
+        If False the resulting file will be 256 entries long.
 
-    See this discussion on how to effectively use LUTs in a mapserver mapfile: https://github.com/emerald-geomodelling/disco-tif/issues/4#issuecomment-2084928873
+    print_to_screen : bool (default = False)
+        Option to print the Lut to screen
     """
     colors_rgba = cmap_data_break_to_df(cmap, data_breaks)
     
@@ -330,16 +389,23 @@ Input Parameters:
 
 
 def data_to_uint8_lut(data_breaks, no_data_value, lut_outpath_base, print_to_screen=False):
-    """Function to write a look-up-table for data to uint8 values. This will map the no-data values to 0, the mindata value to 1, and the max data value to 255.
+    """Function to write a look-up-table for data to uint8 values. This will map the no-data values to 0, the min-data
+    value to 1, and the max data value to 255.
 
-Input Parameters:
-    - data_breaks: List of data values to map the cmap too
+Parameters
+----------
+    data_breaks : list
+        List of data values to map the cmap too
     
-    - no_data_value: Value that specifies the no_data_value
+    no_data_value : int, float, or None
+        Value that specifies the no_data_value
     
-    - lut_outpath_base: Full path (without extionsion) to the desired files. Color component and extention will appended to the filename.
+    lut_outpath_base : str
+        Full path (without extension) to the desired files. Color component and extension will append to the filename.
         ex: red file: lut_outpath_base + '_data-uint8.lut'
-    
+
+    print_to_screen : bool (default = False)
+        Option to print the Lut to screen
     """
     my_dat_b = data_breaks.copy()
     datamin = np.min(data_breaks)
@@ -375,20 +441,22 @@ Input Parameters:
 def rgba_lut_dict_builder(cmap, data_breaks, no_data_value, dtype, short_file=True):
     """build a lut dictionary. The key is the data break, the value is a tuple with rgba values
     
-Input Parameters:
-    - cmap: List of hex color codes. ex: EMerald_custom_colors_hexcolorcodes
+Parameters
+----------
+    cmap : list
+        List of hex color codes. ex: EMerald_custom_colors_hexcolorcodes
     
-    - data_breaks: List of data values to map the cmap too
+    data_breaks : list
+        List of data values to map the cmap too
     
-    - no_data_value:
+    no_data_value : int, float, or None
 
-    - dtype: data_type of raster data - probably 'int', or 'float'
+    dtype : dtype
+        Data_type of raster data - probably 'int', or 'float'
 
-    - short_file: boolean. If False the resulting file will be 256 entries long.
-        Default: True
-    
-   See this discussion on how to effectively use LUTs in a mapserver mapfile: https://github.com/emerald-geomodelling/disco-tif/issues/4#issuecomment-2084928873
-    """
+    short_file : bool (default = True)
+        If False the resulting file will be 256 entries long.
+        """
     colors_rgba = cmap_data_break_to_df(cmap, data_breaks)
 
     if not short_file:
@@ -406,13 +474,16 @@ Input Parameters:
 
 def short_data_lut_to_long_uint8_lut(rgba_lut_dict, no_data_value):
     """Converts a short rgba_lut_dictionary object that maps data-breaks to colors into a long, 256 colors, uint8
-    dictionary. if No_data is None data range in the dictionary will map to 0-255. if no_data is a value then this will
-    be inserted into the results and will be mapped to a value of 0 and color of black-transparent
+    dictionary. if No_data is None data range in the dictionary will map to 0-255. if no_data is a value then this
+    will be inserted into the results and will be mapped to a value of 0 and color of black-transparent
 
-Input parameters:
-    rgba_lut_dict: dictionary of datavalues and rgba tuple
+Parameters
+----------
+    rgba_lut_dict : dict
+        Dictionary of datavalues and rgba tuple
     
-    no_data_value: value that represents no-data in the dataset.
+    no_data_value : int, float, or None
+        Value that represents no-data in the dataset.
     """
     datamin = np.min(np.fromiter(rgba_lut_dict.keys(), dtype=float))
     datamax = np.max(np.fromiter(rgba_lut_dict.keys(), dtype=float))
