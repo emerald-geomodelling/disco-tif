@@ -65,7 +65,7 @@ colormap_length = 256
 
 
 def build_custom_colormap(breaks_by_percentages, custom_color_hex, new_cmap_name="Custom_Colormap"):
-    """ Function to take a sorted array of percentage-break-points (i.e. breaks_by_percentages) and applies it to the
+    """Function to take a sorted array of percentage-break-points (i.e. breaks_by_percentages) and applies it to the
     color-list (i.e. custom_color_hex) colormap. The length of the breaks_by_percentages array should be the same length
     as custom_color_hex (length=8 for EMerald_custom_colors_hexcolorcodes) and range from 0 to 1
 
@@ -445,7 +445,8 @@ Returns
     if data_min_max is not None:
         assert len(data_min_max) == 2, "len of data_min_max must be 2"
         assert data_min_max[0] < data_min_max[1], "first value must be less than second value"
-        assert data_min_max[1] > 0, "This should really be a bigger number, but at least this will save dividing by a zero..."
+        assert data_min_max[1] > 0, "This should really be a bigger number, but at least this will save dividing by a" \
+                                    "zero..."
     assert len(clip_perc) == 2, "len of data_min_max must be 2"
     assert clip_perc[0] < clip_perc[1], "first value must be less than second value"
         
@@ -585,7 +586,8 @@ Returns
                                                                        no_data_value=no_data_value,
                                                                        dtype=data[0, 0].dtype)
 
-        new_uint8_rgba_lut_dict = disco_tif.look_up_tables.short_data_lut_to_long_uint8_lut(rgba_lut_dict, no_data_value=no_data_value)
+        new_uint8_rgba_lut_dict = disco_tif.look_up_tables.short_data_lut_to_long_uint8_lut(rgba_lut_dict,
+                                                                                            no_data_value=no_data_value)
 
         new_profile = orig_profile.copy()
         if no_data_value is None:
