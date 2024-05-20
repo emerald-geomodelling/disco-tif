@@ -82,7 +82,7 @@ Parameters
         List of color hex codes to generate the colormap from.
         i.e. ['#000000', '#aaaaaa', '#dddddd', '#eeeeee', '#ffffff']
 
-    new_cmap_name : str (defualt = "Custom_Colormap")
+    new_cmap_name : str (default = "Custom_Colormap")
         String name to use for the generation of the new cmap.
 
 Returns
@@ -115,7 +115,7 @@ Returns
                                           np.round(temp[2]/(colormap_length-1), 3)])
     custom_color_array = np.array(custom_color_rgb)
 
-    if breaks_by_percentages[1] == 0:  # if second entry is 0 we know that there are no negative numbers and we should ignore blue
+    if breaks_by_percentages[1] == 0:  # if second entry is 0 we know that there are no negative numbers, and we should ignore blue (the first color)
         sn = 1
     else:
         sn = 0

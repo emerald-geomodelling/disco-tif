@@ -9,7 +9,7 @@ Parameters
 ----------
     raster_data : 2D numpy array
     
-    cmap : named mpl colormap (defalut = "terrain")
+    cmap : named mpl colormap (default = "terrain")
         Colormap to apply to the single band data
 
     title : str (default = 'Raster Data')
