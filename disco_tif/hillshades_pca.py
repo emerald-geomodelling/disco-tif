@@ -103,7 +103,7 @@ Returns
 
         if np.sum(np.isnan(value)) == 0:
             value = (value * 255).round().astype('uint8')
-            new_profile.update(dtype='uint8')
+            new_profile.update(dtype='uint8', nodata=None)
         else:
             value = (value * 254) + 1
             value[np.isnan(value)] = 0
