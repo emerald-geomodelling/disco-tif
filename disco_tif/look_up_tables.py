@@ -1,3 +1,4 @@
+import copy
 import numpy as np
 import pandas as pd
 import datetime
@@ -35,6 +36,10 @@ Returns
     colors_rgba : pandas dataframe
         Dataframe of data-break values and the associated color
     """
+    if data_breaks[0] >= 0:
+        cmap = copy.deepcopy(cmap)
+        cmap = cmap[1:]
+
     assert len(cmap) == len(data_breaks), f"there's an odd mismatch in length of 'cmap' and 'data_breaks' \n cmap:\n {cmap}\n data_breaks:\n {data_breaks}"
     
     colors_rgba = pd.DataFrame()
