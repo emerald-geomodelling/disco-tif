@@ -198,7 +198,7 @@ Returns
     return pcaComponents
     
 
-def build_hillshade(single_band_tiff_path, data_min_max, hs_azimuths, hs_altitudes, cmap='terrain', process_pca=False, plot_figures=False, **kwargs):
+def build_hillshade(single_band_tiff_path, hs_azimuths, hs_altitudes, process_pca=False, plot_figures=False, data_min_max=None, cmap='terrain', **kwargs):
     """Function to generate hillshades and, if asked for, principal components of the hillshades.
 
 Parameters
@@ -206,18 +206,11 @@ Parameters
     single_band_tiff_path : str
         Path to the original single-band-tiff
 
-    data_min_max : list or tuple
-        Must be of length 2
-        Minimum and maximum values to clip the raster values to.
-
     hs_azimuths : list
         List of azimuths to generate hillshades with
 
     hs_altitudes : list
         List of altitude angles to generate hillshades with
-
-    cmap : mpl-like colormap (default = 'terrain')
-        Matplotlib-like color map. Either a colormap can be passed or a named mpl colormap can be passed.
 
     process_pca : bool (default = False)
         Switch to generate PCA components
@@ -225,15 +218,24 @@ Parameters
     plot_figures : bool (default = False)
         Switch to plot figures to screen
 
+    data_min_max : list or tuple (default=None)
+        Must be of length 2
+        Minimum and maximum values to clip the raster values to.
+
+    cmap : mpl-like colormap (default = 'terrain')
+        Matplotlib-like color map. Either a colormap can be passed or a named mpl colormap can be passed.
+
 Returns
 -------
     hillshades : dict
+        Dictionary of hillshade rasters. The Key is holds the combination of the azimuth and altitude angle used, and
+        the value is the raster
 
     hillshade_file_paths : dict
+        Dictionary of hillshade raster paths. The Key is holds the combination of the azimuth and altitude angle used,
+        and the value is the path to the raster
 
     """
-    assert len(data_min_max) == 2, 'len(data_min_max) must be 2'
-
     # read geotiff and minimally process for the colormap function
     with rasterio.open(single_band_tiff_path, 'r') as src:
         data = src.read(1)  # Read the first band
@@ -263,6 +265,7 @@ Returns
 
     nan_clipped_data = None  # start with None and modify if plotting results to screen
     if plot_figures:
+        assert len(data_min_max) == 2, 'len(data_min_max) must be 2'
         nan_clipped_data = np.clip(data.copy(), data_min_max[0], data_min_max[1]).astype(float)
         if no_data_value is not None:
             nan_clipped_data[data == no_data_value] = np.nan
