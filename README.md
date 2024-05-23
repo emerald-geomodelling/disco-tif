@@ -1,8 +1,28 @@
 # disco_tif
-some general raster tools for visualization
+A few general raster tools for visualization of single-channel geotiffs, like a digital terrain model.
 
-The primary utility of this library is to take a single-channel geotiff and create an rgba (32bit) geotiff. 
-The code can take a colormap name from matplotlib (https://matplotlib.org/stable/users/explain/colors/colormaps.html), however If no colormap is supplied the EMerald_standard_colormap will be applied. This is a data driven colormap.
+<figure1>
+    <img src="https://github.com/emerald-geomodelling/disco-tif/assets/15694972/4a866549-f045-4808-8216-072e827e8a04" width="500" height="500>
+    <figcaption>Original Geotiff from Blue Mesa Reservoir in Colorado, USA</figcaption>
+</figure1>
+
+<figure2>
+    <img src="https://github.com/emerald-geomodelling/disco-tif/assets/15694972/d58de89a-6bad-48f9-810d-5164f971fdf6" width="500" height="500>
+    <figcaption>Colorized Geotiff from Blue Mesa Reservoir in Colorado, USA</figcaption>
+</figure2>
+
+"https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/1m/Projects/CO_WestCentral_2019_A19/TIFF/USGS_1M_13_x29y426_CO_WestCentral_2019_A19.tif"
+
+The primary utility of this library is to take a single-channel geotiff, like a digital terrain model, and create an rgba (either 8 bit, or 32 bit) geotiff as well as hillshades of the raster and a principle-component-analysis of a grouping of hillshades.
+
+![image](https://github.com/emerald-geomodelling/disco-tif/assets/15694972/16a081fc-defb-4b74-9399-42bafcc0efe8) ![image](https://github.com/emerald-geomodelling/disco-tif/assets/15694972/72bfa4a8-c2d6-4654-9d7a-cb2d6912a2b5)
+
+
+
+
+This library.
+
+Besides generating a custom, data driven, colormap the libray can take a named colormap from matplotlib (https://matplotlib.org/stable/users/explain/colors/colormaps.html).
 
 Basically, the EMerald_standard_colormap consists of 8 colors, as seen below.
 ![image](https://github.com/emerald-geomodelling/disco-tif/assets/15694972/578de983-d28b-49be-8c0f-49e2f4d92817)
