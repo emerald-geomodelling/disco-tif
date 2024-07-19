@@ -91,15 +91,27 @@ Returns
     """
     new_geotiff_paths = {}
     for key, value in raster_data_dict.items():
-        if 'component' in key:
+        new_profile = orig_profile.copy()
+        # if 'component' in key:
+        if 'HS_PCA_Comp' in key:
             assert num_hs is not None, "'num_hs' cannot be none if passing in a pca_dictionary_object"
             new_tiff_path = f"{single_band_tiff_path.split('.tif')[0]}_hillshade_pca{num_hs}-{key}.tif"
         else:
             new_tiff_path = f"{single_band_tiff_path.split('.tif')[0]}_hillshade_{key}.tif"
 
-        value = ((value.copy() - np.nanmin(value)) / (np.nanmax(value) - np.nanmin(value)))  # scale 0 to 1
+        print(f"key = {key}")
+        print("input")
+        print(f"np.isnan(value).sum() = {np.isnan(value).sum()}")
+        print(f"np.nanmin(value) = {np.nanmin(value)}")
+        print(f"np.nanmax(value) = {np.nanmax(value)}\n")
 
-        new_profile = orig_profile.copy()
+        value = ((    value.copy() - np.nanmin(value)) /  # shift min to 0
+                 (np.nanmax(value) - np.nanmin(value)))   # scale by range
+
+        print("normalized")
+        print(f"np.isnan(value).sum() = {np.isnan(value).sum()}")
+        print(f"np.nanmin(value) = {np.nanmin(value)}")
+        print(f"np.nanmax(value) = {np.nanmax(value)}\n")
 
         if np.sum(np.isnan(value)) == 0:
             value = (value * 255).round().astype('uint8')
@@ -109,6 +121,11 @@ Returns
             value[np.isnan(value)] = 0
             value = value.round().astype('uint8')
             new_profile.update(dtype='uint8', nodata=0)
+
+        print("scaled")
+        print(f"np.isnan(value).sum() = {np.isnan(value).sum()}")
+        print(f"np.nanmin(value) = {np.nanmin(value)}")
+        print(f"np.nanmax(value) = {np.nanmax(value)}\n")
 
         with rasterio.open(new_tiff_path, 'w', **new_profile) as dst:
             dst.write(arr=value, indexes=1, masked=True)
@@ -182,8 +199,9 @@ Returns
         tdat = dumarray.copy()
         nowdat = pcaout[:, ilay]
         tdat[no_nan_indicies] = nowdat
-        pcaComponents[f'component_{ilay+1}'] = tdat.reshape([nrow, ncol], order='C')
-    
+        # pcaComponents[f'component_{ilay+1}'] = tdat.reshape([nrow, ncol], order='C')
+        pcaComponents[f'HS_PCA_Comp_{ilay+1}'] = tdat.reshape([nrow, ncol], order='C')
+
     if plot_figures:
         # plot the pca outputs
         disco_tif.geotiff_plotting.plot_greyband_only(raster_data_dict=pcaComponents,
@@ -221,9 +239,12 @@ Parameters
     data_min_max : list or tuple (default=None)
         Must be of length 2
         Minimum and maximum values to clip the raster values to.
+        Used only if plot_figures==True
 
     cmap : mpl-like colormap (default = 'terrain')
         Matplotlib-like color map. Either a colormap can be passed or a named mpl colormap can be passed.
+        Used only if plot_figures==True
+
 
 Returns
 -------

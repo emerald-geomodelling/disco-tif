@@ -476,7 +476,9 @@ Returns
     # 2. Generate a custom colormap (EMeraldCustomColormap):
     if color_palette_name is None:
         color_palette_name = "EMeraldCustomTerrain"
-        percentile_breaks = (data_breaks - data_min_max[0]) / (data_min_max[1] - data_min_max[0])
+        print(f"data_breaks = {data_breaks}")
+        print(f"data_min_max = {data_min_max}")
+        percentile_breaks = ((np.array(data_breaks) - data_min_max[0]) / (data_min_max[1] - data_min_max[0])).tolist()
         EMeraldCustomColormap = build_EMerald_terrain_colormap(percentile_breaks)  # only valid for data clipped to this range
     else:
         EMeraldCustomColormap = mpl.colormaps.get_cmap(color_palette_name)
