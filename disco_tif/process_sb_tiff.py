@@ -297,9 +297,9 @@ Returns
     if min_max_method == 'data_absolute':
         # using absolute min max from data
         if no_data_value is not None:
-            data_min_max = [np.min(data[data != no_data_value]), np.max(data[data != no_data_value])]
+            data_min_max = [np.ceil(np.min(data[data != no_data_value])), np.floor(np.max(data[data != no_data_value]))]
         else:
-            data_min_max = [np.min(data), np.max(data)]
+            data_min_max = [np.ceil(np.min(data)), np.floor(np.max(data))]
         
     elif min_max_method == 'percentile':
         # using percentiles of data (defined in the import statement)
@@ -307,8 +307,9 @@ Returns
             data_min_max = np.percentile(a=data[data != no_data_value], q=clip_perc)
         else:
             data_min_max = np.percentile(a=data, q=clip_perc)
-        data_min_max = np.round(data_min_max)
-        data_min_max = data_min_max.astype(int)
+        data_min_max[0] = np.int64(np.ceil(data_min_max[0]))
+        data_min_max[1] = np.int64(np.floor(data_min_max[1]))
+        # data_min_max = data_min_max.astype(int)
         data_min_max = list(data_min_max)
     return data_min_max
 
@@ -475,7 +476,7 @@ Returns
 
     # 2. Generate a custom colormap (EMeraldCustomColormap):
     if color_palette_name is None:
-        color_palette_name = "EMeraldCustomTerrain"
+        color_palette_name = "ECTerra"
         print(f"data_breaks = {data_breaks}")
         print(f"data_min_max = {data_min_max}")
         percentile_breaks = ((np.array(data_breaks) - data_min_max[0]) / (data_min_max[1] - data_min_max[0])).tolist()
@@ -487,7 +488,7 @@ Returns
     
     # define output name
     sbpath, ext = os.path.splitext(single_band_tiff_path)
-    suffix = f"{color_palette_name}_{data_min_max[0]}_to_{data_min_max[1]}_{cmap_method}"
+    suffix = f"{color_palette_name}_{np.round(data_min_max[0], 2)}_to_{np.round(data_min_max[1], 2)}_{cmap_method}"
     lut_outpath_base = f"{sbpath}_{suffix}"
 
     short_files = True

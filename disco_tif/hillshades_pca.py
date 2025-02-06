@@ -95,9 +95,9 @@ Returns
         # if 'component' in key:
         if 'HS_PCA_Comp' in key:
             assert num_hs is not None, "'num_hs' cannot be none if passing in a pca_dictionary_object"
-            new_tiff_path = f"{single_band_tiff_path.split('.tif')[0]}_hillshade_pca{num_hs}-{key}.tif"
+            new_tiff_path = f"{single_band_tiff_path.split('.tif')[0]}_HS_pca{num_hs}_{key.replace('HS_PCA_C', 'c')}.tif"
         else:
-            new_tiff_path = f"{single_band_tiff_path.split('.tif')[0]}_hillshade_{key}.tif"
+            new_tiff_path = f"{single_band_tiff_path.split('.tif')[0]}_HS_{key}.tif"
 
         print(f"key = {key}")
         print("input")
@@ -274,7 +274,7 @@ Returns
     num_hillshades = len(hs_azimuths) * len(hs_altitudes)
 
     max_num_hs = kwargs.get('max_num_hs', 24)
-    assert num_hillshades < max_num_hs, f"Only {max_num_hs} azimuth-altitude combinations can be used to calculate a Hillshade PCA but {num_hillshades} were provided"
+    assert num_hillshades <= max_num_hs, f"Only {max_num_hs} azimuth-altitude combinations can be used to calculate a Hillshade PCA but {num_hillshades} were provided"
 
     hillshades = {}
     for az_ind, my_azimuth in enumerate(hs_azimuths):

@@ -82,16 +82,16 @@ Returns
                                       (np.max(data_breaks) - np.min(data_breaks)) * 254)+1).astype('uint8').tolist()
     
     t_colors_rgba = pd.DataFrame(np.ones(shape=(256, 5))*np.nan, columns=colors_rgba.columns)
-    t_colors_rgba.loc[uint8_data_breaks, ['data_val', 'r', 'g', 'b', 'a']] = colors_rgba[['data_val', 'r', 'g', 'b', 'a']].values
+    t_colors_rgba.loc[uint8_data_breaks, ['data_val', 'r', 'g', 'b', 'a']] = colors_rgba[['data_val', 'r', 'g', 'b', 'a']].round().values
     colors_rgba = t_colors_rgba.interpolate(method='linear', axis=0)
     
     colors_rgba.loc[:, 'data_val'] = colors_rgba.loc[:, 'data_val'].round(3)
     colors_rgba.loc[uint8_data_breaks, 'data_val'] = data_breaks
     if no_data_value is not None:
         colors_rgba = colors_rgba.drop(index=0).reset_index(drop=True)
-        print(f"colors_rgba = {colors_rgba}")
     colors_rgba.loc[:, ['r', 'g', 'b', 'a']] = colors_rgba.loc[:, ['r', 'g', 'b', 'a']].round().astype('uint8')
-    
+    print(f"colors_rgba = {colors_rgba}")
+
     return colors_rgba
     
 ######################################
@@ -148,7 +148,7 @@ Parameters
         if print_to_screen: print(str_out)
 
         for ii in range(0, len(colors_rgba)):
-            str_out = f"{colors_rgba.loc[ii,'data_val'].astype(dtype)},{np.round(colors_rgba.loc[ii,'r']).astype(int)},{np.round(colors_rgba.loc[ii,'g']).astype(int)},{np.round(colors_rgba.loc[ii,'b']).astype(int)},{np.round(colors_rgba.loc[ii,'a']).astype(int)},{colors_rgba.loc[ii,'data_val'].astype(dtype)}\n"
+            str_out = f"{np.round(colors_rgba.loc[ii,'data_val'], 2).astype(dtype)},{np.round(colors_rgba.loc[ii,'r']).astype(int)},{np.round(colors_rgba.loc[ii,'g']).astype(int)},{np.round(colors_rgba.loc[ii,'b']).astype(int)},{np.round(colors_rgba.loc[ii,'a']).astype(int)},{np.round(colors_rgba.loc[ii,'data_val'], 2).astype(dtype)}\n"
             outlut.write(str_out)
             if print_to_screen: print(str_out)
 
@@ -264,7 +264,8 @@ Parameters
         print(f"\nmulti-channel lut file contents:\n")
     with open(tname, 'w') as outlut:
         for ii in range(0, len(colors_rgba)):
-            str_out = f"{colors_rgba.loc[ii,'data_val'].astype(dtype)},{np.round(colors_rgba.loc[ii,'r']).astype('uint8')},{np.round(colors_rgba.loc[ii,'g']).astype('uint8')},{np.round(colors_rgba.loc[ii,'b']).astype('uint8')},{np.round(colors_rgba.loc[ii,'a']).astype('uint8')}\n"
+            # str_out = f"{np.round(colors_rgba.loc[ii,'data_val'].round(2).astype(dtype), 3)},{np.round(colors_rgba.loc[ii,'r']).astype('uint8')},{np.round(colors_rgba.loc[ii,'g']).astype('uint8')},{np.round(colors_rgba.loc[ii,'b']).astype('uint8')},{np.round(colors_rgba.loc[ii,'a']).astype('uint8')}\n"
+            str_out = f"{np.round(colors_rgba.loc[ii,'data_val'].round(2).astype('float64'), 3)},{np.round(colors_rgba.loc[ii,'r']).astype('uint8')},{np.round(colors_rgba.loc[ii,'g']).astype('uint8')},{np.round(colors_rgba.loc[ii,'b']).astype('uint8')},{np.round(colors_rgba.loc[ii,'a']).astype('uint8')}\n"
             outlut.write(str_out)
             if print_to_screen: print(str_out)
 
